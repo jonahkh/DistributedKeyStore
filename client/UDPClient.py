@@ -81,9 +81,10 @@ class UDPClient(AbstractClient):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--serverAddress', type=int, help='Specify the address of the udp client to connect to')
-    parser.add_argument('-p', '--port', type=int, help='Specify the port of of the server that is listeneing for udp packets')
-    udp_client = UDPClient('localhost', 10000)
+    parser.add_argument('-s', '--serverAddress', help='Specify the address of the udp client to connect to', required=True)
+    parser.add_argument('-p', '--port', type=int, help='Specify the port of of the server that is listening for udp packets', required=True)
+    args = parser.parse_args()
+    udp_client = UDPClient(args.serverAddress, args.port)
     udp_client.run()
 
 if __name__ == "__main__":

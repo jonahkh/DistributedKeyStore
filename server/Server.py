@@ -63,15 +63,6 @@ class Server():
         finally:
             sock.close()
 
-
-def port_type(port):
-    if (port > 1024 and port < 65535):
-        return port
-    else:
-        raise argparse.ArgumentTypeError(
-            'port {} is out of range, please choose a port between 1024 and 65535'.format(port))
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--tcp', type=int, help='Specify a port for the tcp server to listen')

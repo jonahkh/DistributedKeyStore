@@ -9,18 +9,15 @@ from server.PacketManager import PacketManager
 logger = logging.getLogger(__name__)
 BUFFER_SIZE = 256
 
-
 class Request(Enum):
     PUT = "PUT"
     GET = "GET"
     DELETE = "DELETE"
 
-
 key_store = {}
 thread_lock = threading.Lock()
 packet_manager = PacketManager()
 sequence_number_manager = {}
-
 
 class RequestThread(threading.Thread):
     def __init__(self, connection, client_address, protocol, port=None):
