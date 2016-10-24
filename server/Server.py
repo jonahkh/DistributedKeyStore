@@ -72,12 +72,14 @@ def main():
     parser.add_argument('-u', '--udp', type=int, help='Specify a port for the udp server to listen')
     parser.add_argument('-r', '--rpc', type=int, help='Specify a port for the tcp server to listen')
     args = parser.parse_args()
+    server_address = socket.gethostbyname(socket.gethostname())
+
     if (args.tcp):
-        Server(args.tcp, 'tcp', 'localhost')
+        Server(args.tcp, 'tcp', server_address)
     elif (args.udp):
-        Server(args.udp, 'udp', 'localhost')
+        Server(args.udp, 'udp', server_address)
     elif (args.rpc):
-        Server(args.rpc, 'rpc', 'localhost')
+        Server(args.rpc, 'rpc', server_address)
     else:
         logger.error('invalid arguments, at least one of -t, -u, -r are required. Run with -h for help')
 
