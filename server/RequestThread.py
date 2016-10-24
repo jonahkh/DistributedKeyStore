@@ -3,6 +3,9 @@ import time
 import json
 import logging
 import socket
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from enum import Enum
 from server.PacketManager import PacketManager
 

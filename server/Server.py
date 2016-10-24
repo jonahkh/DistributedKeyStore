@@ -1,6 +1,9 @@
 import socket
 import argparse
 import logging
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from server.RequestThread import RequestThread
 from xmlrpc.server import SimpleXMLRPCServer
 

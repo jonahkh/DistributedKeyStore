@@ -4,6 +4,9 @@ import time
 import argparse
 import csv
 import logging
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from client.PacketManager import PacketManager
 from client.AbstractClient import AbstractClient
 logger = logging.getLogger(__name__)

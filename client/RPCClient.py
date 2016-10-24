@@ -3,6 +3,9 @@ import csv
 import time
 import logging
 import socket
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from xmlrpc.client import ServerProxy
 from client.PacketManager import PacketManager
 from client.AbstractClient import AbstractClient
@@ -42,7 +45,7 @@ class RPCClient(AbstractClient):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--serverAddress', type=int, help='Specify the address of the udp client to connect to')
+    parser.add_argument('-s', '--serverAddress', help='Specify the address of the udp client to connect to')
     parser.add_argument('-p', '--port', type=int, help='Specify the port of of the server that is listening for udp packets')
     args = parser.parse_args()
     rpc_client = RPCClient(args.serverAddress, args.port)
