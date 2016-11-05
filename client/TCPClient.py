@@ -47,26 +47,28 @@ class TCPClient(AbstractClient):
         file = open('kvp-operations.txt')
         input = csv.reader(file)
         throughput_begin = time.time()
-        for row in input:
-            before = time.time()
-            response = self.send_message_tcp(row[0], row[1], row[2])
-            after = time.time()
-            call_time = after - before
-            logger.error('Received message {} that took {} milliseconds {}'.format(response, call_time * 1000, self.get_time_stamp()))
-            self.timing_information[row[0]].append(call_time * 1000.)
-        throughput_end = time.time()
-        throughput_time = throughput_end - throughput_begin
-        time.sleep(1)
-        throughput = (256 * 150 * .0001) / throughput_time
-        self.get_statistics('TCP')
-        print('Average Throughput: {}'.format(throughput))
+        self.send_message_tcp('PUT', 'dog', 'puppy')
+        self.send_message_tcp('GET', 'dog', 'puppy')
+        # for row in input:
+        #     before = time.time()
+        #     response = self.send_message_tcp(row[0], row[1], row[2])
+        #     after = time.time()
+        #     call_time = after - before
+        #     logger.error('Received message {} that took {} milliseconds {}'.format(response, call_time * 1000, self.get_time_stamp()))
+        #     self.timing_information[row[0]].append(call_time * 1000.)
+        # throughput_end = time.time()
+        # throughput_time = throughput_end - throughput_begin
+        # time.sleep(1)
+        # throughput = (256 * 150 * .0001) / throughput_time
+        # self.get_statistics('TCP')
+        # print('Average Throughput: {}'.format(throughput))
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--serverAddress', help='Specify the address of the tcp client to connect to')
     parser.add_argument('-p', '--port', type=int, help='Specify the port of of the server that is listening for tcp packets')
     args = parser.parse_args()
-    tcp_client = TCPClient('localhost', 10000)
+    tcp_client = TCPClient('127.22.71.27', 10000)
     tcp_client.run()
 
 if __name__ == "__main__":
