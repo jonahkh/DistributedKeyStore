@@ -21,7 +21,7 @@ class ReceiverThread(threading.Thread):
         self.sock.listen(1)
         try:
             while True:
-                print('Server {} listening on port {}'.format(self.server_address, self.port))
+                print('Server {} listening on port {}'.format('localhost', self.port))
                 connection, client_address = self.sock.accept()
                 self.request_manager.add_job(connection, client_address)
         except Exception as e:
