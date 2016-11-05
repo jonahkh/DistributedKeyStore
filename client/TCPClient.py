@@ -66,7 +66,7 @@ def main():
     parser.add_argument('-s', '--serverAddress', help='Specify the address of the tcp client to connect to')
     parser.add_argument('-p', '--port', type=int, help='Specify the port of of the server that is listening for tcp packets')
     args = parser.parse_args()
-    tcp_client = TCPClient(args.serverAddress, args.port)
+    tcp_client = TCPClient('localhost', 10000)
     tcp_client.run()
 
 if __name__ == "__main__":
