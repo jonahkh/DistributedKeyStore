@@ -23,6 +23,7 @@ class TCPClient(AbstractClient):
     def send_message_tcp(self, operation, key, value=None):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
+        print(self.server_address)
         sock.connect(self.server_address)
         packet = self.packet_manager.get_packet('tcp', operation, key, value)
         message = str(json.dumps(packet)).encode()
@@ -65,10 +66,10 @@ class TCPClient(AbstractClient):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--serverAddress', help='Specify the address of the tcp client to connect to')
-    parser.add_argument('-p', '--port', type=int, help='Specify the port of of the server that is listening for tcp packets')
+    parser.add_argument('-s', '--serverAddress', help='Specify the address of the tcp client to connect to', required=True)
+    parser.add_argument('-p', '--port', type=int, help='Specify the port of of the server that is listening for tcp packets', required=True)
     args = parser.parse_args()
-    tcp_client = TCPClient('127.22.71.27', 10000)
+    tcp_client = TCPClient(args.serverAddress, args.port)
     tcp_client.run()
 
 if __name__ == "__main__":
