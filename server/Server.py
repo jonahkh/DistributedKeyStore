@@ -16,7 +16,7 @@ def main():
     parser.add_argument('-p', '--port', type=int, help='Specify a port for the tcp server to listen')
     args = parser.parse_args()
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_address = socket.gethostbyname(socket.gethostname())
+    server_address = (socket.gethostbyname(socket.gethostname()), args.port)
     sock.bind(server_address)
     sock.listen(1)
     print(sock.accept())
