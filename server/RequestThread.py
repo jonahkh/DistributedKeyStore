@@ -39,21 +39,18 @@ class RequestThread(threading.Thread):
             'Query received: {} from INET: {}, Port: {} {}'.format(msg, client_address[0], client_address[1],
                                                                    self.packet_manager.get_time_stamp()))
         data = json.loads(msg)
-        response = None
-        if (self.packet_manager.is_valid_packet(data)):
-            if ('tcp' == data['protocol']):         # Message from client
-                response = self.__get_data(data)
-            elif ('2pc' == data['protocol']):       # Message from another node
-                response = self.__handle_2PC(connection, client_address)
-            connection.sendall(response)
+        if ('tcp' == data['protocol'] and self.packet_manager.is_valid_tcp_packet(data)):         # Message from client
+            response = self.__get_data(data)
+            logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
+        elif ('2pc' == data['protocol'] and self.packet_manager.is_valid_2pc_packet(data)):       # Message from another node
+            response = self.__handle_2PC(connection, client_address)
             logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
         else:
-            packet = self.packet_manager.get_packet('tcp', 'failure', 'Not a valid packet')
-
-            connection.sendall(packet)
+            response = self.packet_manager.get_packet('tcp', 'failure', 'Not a valid packet')
             logger.error(
                 'Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
-                                                                  self.packet_manager.get_time_stamp()))
+                                                              self.packet_manager.get_time_stamp()))
+        connection.sendall(response)
         connection.close()
         return response
 
@@ -63,7 +60,7 @@ class RequestThread(threading.Thread):
         connection.send_all(ack_packet)
         response = connection.recv(BUFFER_SIZE).decode()
         commit_message = json.loads(response)
-        if (self.packet_manager.is_valid_packet(commit_message)):
+        if (self.packet_manager.is_valid_2pc_packet(commit_message)):
             if (commit_message['status'] == 'success'):
                 logger.error('Acknowledgment received {} from {} {}'.format(commit_message, client_address[0], self.packet_manager.get_time_stamp()))
                 data = self.__get_data(commit_message)
