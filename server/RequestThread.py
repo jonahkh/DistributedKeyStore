@@ -39,7 +39,7 @@ class RequestThread(threading.Thread):
 
     def __tcp_protocol(self, connection, client_address):
         msg = connection.recv(BUFFER_SIZE).decode()
-        print(msg)
+        print('msg: '.format(msg))
         logger.error(
             'Query received: {} from INET: {}, Port: {} {}'.format(msg, client_address[0], client_address[1],
                                                                    self.__get_time_stamp()))
@@ -136,7 +136,7 @@ class RequestThread(threading.Thread):
     def run(self):
         while True:
             request = self.request_queue.get()
-            print(request)
+            print('request: {}'.format(request))
             response = self.__tcp_protocol(request['connection'], request['client_address'])
 
 
