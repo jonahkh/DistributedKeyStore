@@ -138,7 +138,7 @@ class RequestThread(threading.Thread):
             request = self.request_queue.get()
             print('request: {}'.format(request))
             response = self.__tcp_protocol(request['connection'], request['client_address'])
-
+            print(response)
 
     def delete(self, key):
         status = 'failure'
