@@ -50,10 +50,12 @@ class RequestThread(threading.Thread):
                 response = self.__get_data(data)
             elif ('2pc' == data['protocol']):       # Message from another node
                 response = self.__handle_2PC(connection, client_address)
-            connection.sendall(response.encode())
+            connection.sendall(str(response).encode())
             logger.error('Query response: {} {}'.format(response, self.__get_time_stamp()))
         else:
-            connection.sendall(packet_manager.get_packet('tcp', 'failure', 'Not a valid packet').encode())
+            packet = packet_manager.get_packet('tcp', 'failure', 'Not a valid packet')
+
+            connection.sendall(str(json.dumps(packet)).encode())
             logger.error(
                 'Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
                                                                   self.__get_time_stamp()))
@@ -115,6 +117,7 @@ class RequestThread(threading.Thread):
                     response_list.append(executor.submit(self.__phase_1, server, request_list))
                     # if (server is not socket.gethostbyname(socket.gethostname())):
                     # request_list[server] = {'socket': sock, 'ack_received': False}
+                    print('all requests sent')
                 while request_list:
                     pass
                 # time.sleep(5)
