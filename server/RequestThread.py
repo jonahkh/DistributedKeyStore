@@ -106,6 +106,7 @@ class RequestThread(threading.Thread):
         response_list = []
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                print('serving requests to other servers')
                 for server in self.server_addresses:
                     response_list.append(executor.submit(self.__phase_1, server))
                     # if (server is not socket.gethostbyname(socket.gethostname())):
