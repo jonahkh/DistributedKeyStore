@@ -45,9 +45,9 @@ class RequestThread(threading.Thread):
         data = json.loads(msg)
         response = None
         if (self.__is_valid_packet(data)):
-            if ('tcp' is data['protocol']):         # Message from client
+            if ('tcp' == data['protocol']):         # Message from client
                 response = self.__get_data(data)
-            elif ('2pc' is data['protocol']):       # Message from another node
+            elif ('2pc' == data['protocol']):       # Message from another node
                 response = self.__handle_2PC(connection, client_address)
             connection.sendall(response.encode())
             logger.error('Query response: {} {}'.format(response, self.__get_time_stamp()))
@@ -66,7 +66,7 @@ class RequestThread(threading.Thread):
         response = connection.recv(BUFFER_SIZE).decode()
         commit_message = json.loads(response)
         if (self.__is_valid_packet(commit_message)):
-            if (commit_message['status'] is 'success'):
+            if (commit_message['status'] == 'success'):
                 logger.error('Acknowledgment received {} from {} {}'.format(commit_message, client_address[0], self.__get_time_stamp()))
                 data = self.__get_data(commit_message)
             else:
@@ -93,7 +93,7 @@ class RequestThread(threading.Thread):
         if (operation == Request.GET.name):
             response = self.get(key)
         else:
-            if ('2pc' in data['protocol']):
+            if ('tcp' in data['protocol']):
                 commit_message = self.__coordinator_handler(key, value, operation)
             if (commit_message and operation == Request.DELETE.name):
                 response = self.delete(key)
@@ -102,26 +102,35 @@ class RequestThread(threading.Thread):
         return response
     
     def __coordinator_handler(self, key, value, operation):
-        request_list = {}
+        request_list = [
+            '192.168.1.138'
+        ]
         response_list = []
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 print('serving requests to other servers')
                 for server in self.server_addresses:
-                    response_list.append(executor.submit(self.__phase_1, server))
+                    response_list.append(executor.submit(self.__phase_1, server, request_list))
                     # if (server is not socket.gethostbyname(socket.gethostname())):
                     # request_list[server] = {'socket': sock, 'ack_received': False}
-
+                while request_list:
+                    pass
+            print('here')
         except Exception as e:
             print(e)
 
-    def __phase_1(self, server_address):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM).bind((server_address, self.port))
-        sock.connect(server_address)
+    def __phase_1(self, server_address, request_list):
+        print('Sending to {}'.format(server_address))
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)#.bind((server_address, self.port))
+        print('sock {}'.format(sock))
+        sock.connect((server_address, self.port))
         packet = packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
         sock.sendall(packet)
+        print('packet sent {} '.format(packet))
         msg = sock.recv(BUFFER_SIZE).decode()
+        request_list.pop(server_address)
         print(msg)
+
 
     def run(self):
         while True:

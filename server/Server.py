@@ -13,6 +13,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--port', type=int, help='Specify a port for the tcp server to listen')
     args = parser.parse_args()
+    args.port = 10000
     request_manager = RequestManager(args.port)
     receiver = None
     try:
@@ -23,6 +24,9 @@ def main():
         print('terminating program')
         receiver.close_socket()
         os._exit(0)
+    except Exception as e:
+        print('exception... closing socket')
+        receiver.close_socket()
 
 
 if __name__ == "__main__":

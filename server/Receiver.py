@@ -21,9 +21,10 @@ class ReceiverThread(threading.Thread):
         self.sock.bind(server_address)
         self.sock.listen(1)
         try:
+            print('Server {} listening on port {}'.format(server_address, self.port))
             while True:
-                print('Server {} listening on port {}'.format(server_address, self.port))
                 connection, client_address = self.sock.accept()
+                print('passing job to manager')
                 self.request_manager.add_job(connection, client_address)
         except Exception as e:
             print(e)
