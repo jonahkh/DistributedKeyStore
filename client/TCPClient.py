@@ -33,17 +33,21 @@ class TCPClient(AbstractClient):
         sock.sendall(message)
         data = ''
         while True:
-            print('receiving data')
-            msg = sock.recv(BUFFER_SIZE).decode()
-            packet = self.packet_manager.validate_receiving_packet(msg)
-            if msg and packet:
-                data += msg
-            elif msg and not packet:
-                logger.error('Received unsolicited response {} {}'.format(msg, self.get_time_stamp()))
-            else:
+            try:
+                print('receiving data')
+                msg = sock.recv(BUFFER_SIZE).decode()
+                packet = self.packet_manager.validate_receiving_packet(msg)
+                if msg and packet:
+                    data += msg
+                elif msg and not packet:
+                    logger.error('Received unsolicited response {} {}'.format(msg, self.get_time_stamp()))
+                else:
+                    data = json.loads(data)
+                    sock.close()
+                    break
+            except Exception as e:
+                print(e)
                 break
-        data = json.loads(data)
-        sock.close()
         return data
 
     def run(self):
