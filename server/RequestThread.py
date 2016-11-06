@@ -40,7 +40,6 @@ class RequestThread(threading.Thread):
     def __tcp_protocol(self, connection, client_address):
         print('connection: {}'.format(connection))
         msg = connection.recv(BUFFER_SIZE).decode()
-        print('msg: '.format(msg))
         logger.error(
             'Query received: {} from INET: {}, Port: {} {}'.format(msg, client_address[0], client_address[1],
                                                                    self.__get_time_stamp()))
@@ -54,7 +53,7 @@ class RequestThread(threading.Thread):
             connection.sendall(response.encode())
             logger.error('Query response: {} {}'.format(response, self.__get_time_stamp()))
         else:
-            connection.sendall(packet_manager.get_packet('tcp', 'failure', 'Not a valid packet'))
+            connection.sendall(packet_manager.get_packet('tcp', 'failure', 'Not a valid packet').encode())
             logger.error(
                 'Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
                                                                   self.__get_time_stamp()))
@@ -62,7 +61,7 @@ class RequestThread(threading.Thread):
         return response
 
     def __handle_2PC(self, connection, client_address):
-        ack_packet = packet_manager.get_packet('2pc', 'ack', 'waiting for commit')
+        ack_packet = packet_manager.get_packet('2pc', 'ack', 'waiting for commit').encode()
         logger.error('Sending acknowledgment {} to {} {}'.format(ack_packet, client_address[0], self.__get_time_stamp()))
         connection.send_all(ack_packet)
         response = connection.recv(BUFFER_SIZE).decode()
@@ -104,9 +103,10 @@ class RequestThread(threading.Thread):
         return response
     
     def __coordinator_handler(self, key, value, operation):
-        request_list = [
-            '192.168.1.138'
-        ]
+        # request_list = [
+        #     '192.168.1.138'
+        # ]
+        request_list = self.server_addresses
         response_list = []
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
@@ -117,6 +117,7 @@ class RequestThread(threading.Thread):
                     # request_list[server] = {'socket': sock, 'ack_received': False}
                 while request_list:
                     pass
+                # time.sleep(5)
             print('here')
         except Exception as e:
             print(e)
@@ -128,7 +129,9 @@ class RequestThread(threading.Thread):
         sock.connect((server_address, self.port))
         packet = packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
         print('sending packet {}'.format(packet))
-        sock.sendall(str(json.dumps(packet)).encode)
+        sock.settimeout(1000)
+        sock.sendall(str(json.dumps(packet)).encode())
+
         print('packet sent {} '.format(packet))
         msg = sock.recv(BUFFER_SIZE).decode()
         request_list.pop(server_address)
