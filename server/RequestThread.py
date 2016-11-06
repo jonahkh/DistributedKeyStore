@@ -38,7 +38,7 @@ class RequestThread(threading.Thread):
                 and 'value' in packet.get('data'))
 
     def __tcp_protocol(self, connection, client_address):
-        print('receiving TCP message')
+        print('connection: {}'.format(connection))
         msg = connection.recv(BUFFER_SIZE).decode()
         print('msg: '.format(msg))
         logger.error(
@@ -128,6 +128,7 @@ class RequestThread(threading.Thread):
         sock.connect((server_address, self.port))
         packet = packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
         print('sending packet {}'.format(packet))
+        sock.settimeout(5)
         sock.sendall(str(json.dumps(packet)).encode)
         print('packet sent {} '.format(packet))
         msg = sock.recv(BUFFER_SIZE).decode()
