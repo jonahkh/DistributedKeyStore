@@ -5,6 +5,7 @@ import logging
 import socket
 import os
 import sys
+import copy
 import concurrent.futures
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from enum import Enum
@@ -43,6 +44,7 @@ class RequestThread(threading.Thread):
         if ('tcp' == data['protocol'] and self.packet_manager.is_valid_tcp_packet(data)):         # Message from client
             response = self.__get_data(data)
             logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
+            connection.sendall(response)
         elif ('2pc' == data['protocol'] and self.packet_manager.is_valid_2pc_packet(data)):       # Message from another node
             response = self.__handle_2PC(connection, client_address)
             logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
@@ -51,15 +53,15 @@ class RequestThread(threading.Thread):
             logger.error(
                 'Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
                                                               self.packet_manager.get_time_stamp()))
-        connection.sendall(response)
+            connection.sendall(response)
         connection.close()
-        return response
 
     def __handle_2PC(self, connection, client_address):
         ack_packet = self.packet_manager.get_packet('2pc', 'ack', 'waiting for commit')
         logger.error('Sending acknowledgment {} to {} {}'.format(ack_packet, client_address[0], self.packet_manager.get_time_stamp()))
         connection.sendall(ack_packet)
         response = connection.recv(BUFFER_SIZE).decode()
+        logger.error('Received response {} from: {}'.format(response, client_address))
         commit_message = json.loads(response)
         if (self.packet_manager.is_valid_2pc_packet(commit_message)):
             if (commit_message['status'] == 'success'):
@@ -97,10 +99,11 @@ class RequestThread(threading.Thread):
         # request_list = [
         #     '192.168.1.138'
         # ]
-        request_list = self.server_addresses
+        request_list = copy.copy(self.server_addresses)
+        print('request list: {}'.format(request_list))
         response_list = []
         try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
                 print('serving requests to other servers')
                 for server in self.server_addresses:
                     response_list.append(executor.submit(self.__phase_1, server, request_list))
@@ -110,9 +113,26 @@ class RequestThread(threading.Thread):
                 while request_list:
                     pass
                 # time.sleep(5)
-            print('here')
+            print(self.server_addresses)
+            if (not request_list):
+                for response in response_list:
+                    sock = response.result()
+                    print('type: {} sock: {}'.format(type(sock), sock))
+                    logger.error('Sending commit message')
+                    sock.sendall(self.packet_manager.get_packet('2pc', 'success', {'key': key, 'value': value}))
+                    sock.close()
+                return True
+                # with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                #     for server in self.server_addresses:
+                #         executor.submit(self.__send_commit, server)
         except Exception as e:
             print(e)
+        return False
+
+    def __send_commit(self, server):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((server, self.port))
+
 
     def __phase_1(self, server_address, request_list):
         print('Sending to {}'.format(server_address))
@@ -127,8 +147,10 @@ class RequestThread(threading.Thread):
 
         # print('packet sent {} '.format(packet))
         msg = sock.recv(BUFFER_SIZE).decode()
-        request_list.pop(server_address)
-        print('msg: '.format(msg))
+        logger.error('Ack {} received from {}'.format(msg, server_address))
+        request_list.remove(server_address)
+        print('socket: {}'.format(sock))
+        return sock
 
 
     def run(self):

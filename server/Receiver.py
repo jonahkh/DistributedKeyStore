@@ -18,7 +18,13 @@ class ReceiverThread(threading.Thread):
     def run(self):
         server_address = socket.gethostbyname(socket.gethostname())
         server_address = (server_address, self.port)
-        self.sock.bind(server_address)
+        while True:
+            try:
+                self.sock.bind(server_address)
+                print('socket binded')
+                break
+            except Exception as e:
+                pass
         self.sock.listen(1)
         try:
             print('Server {} listening on port {}'.format(server_address, self.port))
