@@ -6,7 +6,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from server.RequestThread import RequestThread
 from server.PacketManager import PacketManager
 
-THREAD_COUNT = 5
+THREAD_COUNT = 10
 class RequestManager():
     def __init__(self, port):
         self.tasks = Queue(THREAD_COUNT)
