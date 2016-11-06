@@ -22,7 +22,7 @@ class TCPClient(AbstractClient):
 
     def send_message_tcp(self, operation, key, value=None):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
+        # sock.settimeout(5)
         print(self.server_address)
         sock.connect(self.server_address)
         packet = self.packet_manager.get_packet('tcp', operation, key, value)
