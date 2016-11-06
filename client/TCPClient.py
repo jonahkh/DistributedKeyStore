@@ -49,22 +49,19 @@ class TCPClient(AbstractClient):
     def run(self):
         file = open('kvp-operations.txt')
         input = csv.reader(file)
-        throughput_begin = time.time()
-        print(self.send_message_tcp('PUT', 'dog', 'puppy'))
-        print(self.send_message_tcp('GET', 'dog', 'puppy'))
-        # for row in input:
-        #     before = time.time()
-        #     response = self.send_message_tcp(row[0], row[1], row[2])
-        #     after = time.time()
-        #     call_time = after - before
-        # logger.error('Received message {} that took {} milliseconds {}'.format(response, call_time * 1000, self.get_time_stamp()))
-            # self.timing_information[row[0]].append(call_time * 1000.)
-        # throughput_end = time.time()
-        # throughput_time = throughput_end - throughput_begin
-        # time.sleep(1)
-        # throughput = (256 * 150 * .0001) / throughput_time
-        # self.get_statistics('TCP')
-        # print('Average Throughput: {}'.format(throughput))
+        for row in input:
+            before = time.time()
+            response = self.send_message_tcp(row[0], row[1], row[2])
+            after = time.time()
+            call_time = after - before
+            logger.error('Received message {} that took {} milliseconds {}'.format(response, call_time * 1000, self.get_time_stamp()))
+            self.timing_information[row[0]].append(call_time * 1000.)
+        throughput_end = time.time()
+        throughput_time = throughput_end - throughput_begin
+        time.sleep(1)
+        throughput = (256 * 150 * .0001) / throughput_time
+        self.get_statistics('TCP')
+        print('Average Throughput: {}'.format(throughput))
 
 def main():
     parser = argparse.ArgumentParser()

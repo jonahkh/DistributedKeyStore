@@ -36,7 +36,7 @@ class RequestManager():
 
     def __get_server_addresses(self):
         return [
-            '192.168.1.138',
+            # '192.168.1.138',
             '192.168.1.113',
             '192.168.1.144',
             '192.168.1.107'
