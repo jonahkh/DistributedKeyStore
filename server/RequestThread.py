@@ -18,7 +18,7 @@ class Request(Enum):
     GET = "GET"
     DELETE = "DELETE"
 
-packet_manager = PacketManager()
+# packet_manager = PacketManager()
 sequence_number_manager = {}
 
 class RequestThread(threading.Thread):
@@ -29,64 +29,55 @@ class RequestThread(threading.Thread):
         self.thread_lock = thread_lock
         self.server_addresses = server_addresses[0]
         self.port = server_addresses[1]
+        self.packet_manager = packet_manager
 
-    def __is_valid_packet(self, packet):
-        return ('protocol' in packet
-                and 'operation' in packet and self.__is_valid_operation(packet.get('operation'))
-                and 'data' in packet
-                and 'key' in packet.get('data')
-                and 'value' in packet.get('data'))
 
     def __tcp_protocol(self, connection, client_address):
-        print('connection: {}'.format(connection))
+        # print('connection: {}'.format(connection))
         msg = connection.recv(BUFFER_SIZE).decode()
         logger.error(
             'Query received: {} from INET: {}, Port: {} {}'.format(msg, client_address[0], client_address[1],
-                                                                   self.__get_time_stamp()))
+                                                                   self.packet_manager.get_time_stamp()))
         data = json.loads(msg)
         response = None
-        if (self.__is_valid_packet(data)):
+        if (self.packet_manager.is_valid_packet(data)):
             if ('tcp' == data['protocol']):         # Message from client
                 response = self.__get_data(data)
             elif ('2pc' == data['protocol']):       # Message from another node
                 response = self.__handle_2PC(connection, client_address)
-            connection.sendall(str(response).encode())
-            logger.error('Query response: {} {}'.format(response, self.__get_time_stamp()))
+            connection.sendall(response)
+            logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
         else:
-            packet = packet_manager.get_packet('tcp', 'failure', 'Not a valid packet')
+            packet = self.packet_manager.get_packet('tcp', 'failure', 'Not a valid packet')
 
-            connection.sendall(str(json.dumps(packet)).encode())
+            connection.sendall(packet)
             logger.error(
                 'Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
-                                                                  self.__get_time_stamp()))
+                                                                  self.packet_manager.get_time_stamp()))
         connection.close()
         return response
 
     def __handle_2PC(self, connection, client_address):
-        ack_packet = packet_manager.get_packet('2pc', 'ack', 'waiting for commit').encode()
-        logger.error('Sending acknowledgment {} to {} {}'.format(ack_packet, client_address[0], self.__get_time_stamp()))
+        ack_packet = self.packet_manager.get_packet('2pc', 'ack', 'waiting for commit')
+        logger.error('Sending acknowledgment {} to {} {}'.format(ack_packet, client_address[0], self.packet_manager.get_time_stamp()))
         connection.send_all(ack_packet)
         response = connection.recv(BUFFER_SIZE).decode()
         commit_message = json.loads(response)
-        if (self.__is_valid_packet(commit_message)):
+        if (self.packet_manager.is_valid_packet(commit_message)):
             if (commit_message['status'] == 'success'):
-                logger.error('Acknowledgment received {} from {} {}'.format(commit_message, client_address[0], self.__get_time_stamp()))
+                logger.error('Acknowledgment received {} from {} {}'.format(commit_message, client_address[0], self.packet_manager.get_time_stamp()))
                 data = self.__get_data(commit_message)
             else:
                 logger.error(
                     'Aborting request from {}:{} {}'.format(client_address[0], client_address[1],
-                                                                      self.__get_time_stamp()))
+                                                                      self.packet_manager.get_time_stamp()))
         else:
             logger.error(
                 'Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
-                                                                  self.__get_time_stamp()))
+                                                                  self.packet_manager.get_time_stamp()))
+        return self.packet_manager.get_packet('tcp', 'success', 'who needs data?')
 
-    def __is_valid_operation(self, operation):
-        return operation == Request.PUT.name or operation == Request.DELETE.name or operation == Request.GET.name
-
-    def __get_time_stamp(self):
-        return 'at local time: {}, system time: {}'.format(time.asctime(), time.time())
-
+            
     def __get_data(self, data):
         key = data['data']['key']
         value = data['data']['value']
@@ -117,7 +108,7 @@ class RequestThread(threading.Thread):
                     response_list.append(executor.submit(self.__phase_1, server, request_list))
                     # if (server is not socket.gethostbyname(socket.gethostname())):
                     # request_list[server] = {'socket': sock, 'ack_received': False}
-                    print('all requests sent')
+                print('all requests sent')
                 while request_list:
                     pass
                 # time.sleep(5)
@@ -126,16 +117,16 @@ class RequestThread(threading.Thread):
             print(e)
 
     def __phase_1(self, server_address, request_list):
-        print('Sending to {}'.format(server_address))
+        # print('Sending to {}'.format(server_address))
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print('sock {}'.format(sock))
+        # print('sock {}'.format(sock))
         sock.connect((server_address, self.port))
-        packet = packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
+        packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
         print('sending packet {}'.format(packet))
         sock.settimeout(1000)
-        sock.sendall(str(json.dumps(packet)).encode())
+        sock.sendall(packet)
 
-        print('packet sent {} '.format(packet))
+        # print('packet sent {} '.format(packet))
         msg = sock.recv(BUFFER_SIZE).decode()
         request_list.pop(server_address)
         print('msg: '.format(msg))
@@ -144,7 +135,7 @@ class RequestThread(threading.Thread):
     def run(self):
         while True:
             request = self.request_queue.get()
-            print('request: {}'.format(request))
+            # print('request: {}'.format(request))
             response = self.__tcp_protocol(request['connection'], request['client_address'])
             print(response)
 
@@ -158,7 +149,7 @@ class RequestThread(threading.Thread):
         else:
             response = 'Key not found'
         self.thread_lock.release()
-        return json.dumps(packet_manager.get_packet('tcp', status, response))
+        return self.packet_manager.get_packet('tcp', status, response)
 
     def get(self, key):
         status = 'failure'
@@ -169,10 +160,10 @@ class RequestThread(threading.Thread):
         else:
             response = 'Key not found'
         self.thread_lock.release()
-        return json.dumps(packet_manager.get_packet('tcp', status, response))
+        return self.packet_manager.get_packet('tcp', status, response)
 
     def put(self, key, value):
         self.thread_lock.acquire()
         self.key_store[key] = value
         self.thread_lock.release()
-        return json.dumps(packet_manager.get_packet('tcp', 'success', None))
+        return self.packet_manager.get_packet('tcp', 'success', None)
