@@ -69,6 +69,7 @@ class RequestThread(threading.Thread):
 
             
     def __get_data(self, data):
+        print('getting data')
         key = data['data']['key']
         value = data['data']['value']
         operation = data['operation']
@@ -78,6 +79,7 @@ class RequestThread(threading.Thread):
             response = self.get(key)
         else:
             if ('tcp' in data['protocol']):
+                print('passing to coordinator')
                 commit_message = self.__coordinator_handler(key, value, operation)
             if (commit_message and operation == 'DELETE'):
                 response = self.delete(key)
@@ -89,6 +91,7 @@ class RequestThread(threading.Thread):
         request_list = copy.copy(self.server_addresses)
         response_list = []
         try:
+            print('requesting acks from other servers')
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
                 for server in self.server_addresses:
                     response_list.append(executor.submit(self.__phase_1, server, request_list))
