@@ -28,7 +28,6 @@ class ReceiverThread(threading.Thread):
         try:
             print('Server {} listening on port {}'.format(server_address, self.port))
             while True:
-                print('Awaiting connection')
                 connection, client_address = self.sock.accept()
                 self.request_manager.add_job(connection, client_address)
         except Exception as e:

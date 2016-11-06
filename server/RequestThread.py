@@ -87,7 +87,6 @@ class RequestThread(threading.Thread):
     
     def __coordinator_handler(self, key, value, operation):
         request_list = copy.copy(self.server_addresses)
-        print('request list: {}'.format(request_list))
         response_list = []
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
@@ -101,8 +100,6 @@ class RequestThread(threading.Thread):
                     sock = response.result()
                     peer_name = sock.getpeername()
                     if (self.server_address != peer_name[0]):
-                        print('type: {} sock: {}'.format(type(sock), sock.getpeername()))
-                        logger.error('Sending commit message')
                         sock.sendall(self.packet_manager.get_packet('2pc', 'success', {'key': key, 'value': value}, operation))
                     sock.close()
                 return True
