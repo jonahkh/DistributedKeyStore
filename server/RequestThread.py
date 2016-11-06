@@ -12,14 +12,6 @@ from enum import Enum
 logger = logging.getLogger(__name__)
 BUFFER_SIZE = 256
 
-class Request(Enum):
-    PUT = "PUT"
-    GET = "GET"
-    DELETE = "DELETE"
-
-# packet_manager = PacketManager()
-sequence_number_manager = {}
-
 class RequestThread(threading.Thread):
     def __init__(self, queue, key_store, thread_lock, packet_manager, server_addresses):
         threading.Thread.__init__(self, daemon=True)
@@ -82,14 +74,14 @@ class RequestThread(threading.Thread):
         operation = data['operation']
         response = None
         commit_message = True
-        if (operation == Request.GET.name):
+        if (operation == 'GET'):
             response = self.get(key)
         else:
             if ('tcp' in data['protocol']):
                 commit_message = self.__coordinator_handler(key, value, operation)
-            if (commit_message and operation == Request.DELETE.name):
+            if (commit_message and operation == 'DELETE'):
                 response = self.delete(key)
-            elif (commit_message and operation == Request.PUT.name):
+            elif (commit_message and operation == 'PUT'):
                 response = self.put(key, value)
         return response
     
@@ -138,7 +130,7 @@ class RequestThread(threading.Thread):
         while True:
             request = self.request_queue.get()
             response = self.__tcp_protocol(request['connection'], request['client_address'])
-            print(self.key_store)
+            # print(self.key_store)
 
     def delete(self, key):
         status = 'failure'

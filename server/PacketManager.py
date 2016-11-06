@@ -1,11 +1,5 @@
 import time
 import json
-from enum import Enum
-
-class Request(Enum):
-    PUT = "PUT"
-    GET = "GET"
-    DELETE = "DELETE"
 
 class PacketManager():
     def get_packet(self, protocol, status, data, operation=None):
@@ -25,7 +19,7 @@ class PacketManager():
                 and 'status' in packet)
 
     def is_valid_operation(self, operation):
-        return operation == Request.PUT.name or operation == Request.DELETE.name or operation == Request.GET.name
+        return operation == 'PUT' or operation == 'DELETE' or operation == 'GET'
 
     def get_time_stamp(self):
         return 'at local time: {}, system time: {}'.format(time.asctime(), time.time())
