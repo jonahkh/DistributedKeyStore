@@ -49,6 +49,7 @@ class TCPClient(AbstractClient):
     def run(self):
         file = open('kvp-operations.txt')
         input = csv.reader(file)
+        throughput_begin = time.time()
         for row in input:
             before = time.time()
             response = self.send_message_tcp(row[0], row[1], row[2])
