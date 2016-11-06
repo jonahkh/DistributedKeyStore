@@ -21,7 +21,6 @@ class ReceiverThread(threading.Thread):
         while True:
             try:
                 self.sock.bind(server_address)
-                print('socket binded')
                 break
             except Exception as e:
                 pass

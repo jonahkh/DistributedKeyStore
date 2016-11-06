@@ -1,5 +1,4 @@
 import threading
-import time
 import json
 import logging
 import socket
@@ -9,7 +8,6 @@ import copy
 import concurrent.futures
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from enum import Enum
-from server.PacketManager import PacketManager
 
 logger = logging.getLogger(__name__)
 BUFFER_SIZE = 256
@@ -31,11 +29,10 @@ class RequestThread(threading.Thread):
         self.server_addresses = server_addresses[0]
         self.port = server_addresses[1]
         self.packet_manager = packet_manager
-        print(packet_manager)
+        self.server_address = socket.gethostbyname(socket.gethostname())
 
 
     def __tcp_protocol(self, connection, client_address):
-        # print('connection: {}'.format(connection))
         msg = connection.recv(BUFFER_SIZE).decode()
         logger.error(
             'Query received: {} from INET: {}, Port: {} {}'.format(msg, client_address[0], client_address[1],
@@ -47,7 +44,7 @@ class RequestThread(threading.Thread):
             connection.sendall(response)
         elif ('2pc' == data['protocol'] and self.packet_manager.is_valid_2pc_packet(data)):       # Message from another node
             response = self.__handle_2PC(connection, client_address)
-            logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
+            # logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
         else:
             response = self.packet_manager.get_packet('tcp', 'failure', 'Not a valid packet')
             logger.error(
@@ -60,22 +57,23 @@ class RequestThread(threading.Thread):
         ack_packet = self.packet_manager.get_packet('2pc', 'ack', 'waiting for commit')
         logger.error('Sending acknowledgment {} to {} {}'.format(ack_packet, client_address[0], self.packet_manager.get_time_stamp()))
         connection.sendall(ack_packet)
-        response = connection.recv(BUFFER_SIZE).decode()
-        logger.error('Received response {} from: {}'.format(response, client_address))
-        commit_message = json.loads(response)
-        if (self.packet_manager.is_valid_2pc_packet(commit_message)):
-            if (commit_message['status'] == 'success'):
-                logger.error('Acknowledgment received {} from {} {}'.format(commit_message, client_address[0], self.packet_manager.get_time_stamp()))
-                data = self.__get_data(commit_message)
+        if (client_address[0] != self.server_address):
+            response = connection.recv(BUFFER_SIZE).decode()
+            logger.error('Received response {} from: {}'.format(response, client_address))
+            commit_message = json.loads(response)
+            if (self.packet_manager.is_valid_2pc_packet(commit_message)):
+                if (commit_message['status'] == 'success'):
+                    logger.error('Commit message received {} from {} {}'.format(commit_message, client_address[0], self.packet_manager.get_time_stamp()))
+                    data = self.__get_data(commit_message)
+                else:
+                    logger.error(
+                        'Aborting request from {}:{} {}'.format(client_address[0], client_address[1],
+                                                                          self.packet_manager.get_time_stamp()))
             else:
                 logger.error(
-                    'Aborting request from {}:{} {}'.format(client_address[0], client_address[1],
+                    'Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
                                                                       self.packet_manager.get_time_stamp()))
-        else:
-            logger.error(
-                'Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
-                                                                  self.packet_manager.get_time_stamp()))
-        return self.packet_manager.get_packet('tcp', 'success', 'who needs data?')
+            return self.packet_manager.get_packet('tcp', 'success', 'who needs data?')
 
             
     def __get_data(self, data):
@@ -96,35 +94,26 @@ class RequestThread(threading.Thread):
         return response
     
     def __coordinator_handler(self, key, value, operation):
-        # request_list = [
-        #     '192.168.1.138'
-        # ]
         request_list = copy.copy(self.server_addresses)
         print('request list: {}'.format(request_list))
         response_list = []
         try:
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                print('serving requests to other servers')
                 for server in self.server_addresses:
                     response_list.append(executor.submit(self.__phase_1, server, request_list))
-                    # if (server is not socket.gethostbyname(socket.gethostname())):
-                    # request_list[server] = {'socket': sock, 'ack_received': False}
-                print('all requests sent')
                 while request_list:
                     pass
-                # time.sleep(5)
             print(self.server_addresses)
             if (not request_list):
                 for response in response_list:
                     sock = response.result()
-                    print('type: {} sock: {}'.format(type(sock), sock))
-                    logger.error('Sending commit message')
-                    sock.sendall(self.packet_manager.get_packet('2pc', 'success', {'key': key, 'value': value}))
+                    peer_name = sock.getpeername()
+                    if (self.server_address != peer_name[0]):
+                        print('type: {} sock: {}'.format(type(sock), sock.getpeername()))
+                        logger.error('Sending commit message')
+                        sock.sendall(self.packet_manager.get_packet('2pc', 'success', {'key': key, 'value': value}, operation))
                     sock.close()
                 return True
-                # with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                #     for server in self.server_addresses:
-                #         executor.submit(self.__send_commit, server)
         except Exception as e:
             print(e)
         return False
@@ -133,32 +122,23 @@ class RequestThread(threading.Thread):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((server, self.port))
 
-
     def __phase_1(self, server_address, request_list):
-        print('Sending to {}'.format(server_address))
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print('sock {}'.format(sock))
+        sock.settimeout(5)
         sock.connect((server_address, self.port))
-        print('socket connected with {}'.format(server_address))
         packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
-        print('sending packet {}'.format(packet))
-        sock.settimeout(1000)
         sock.sendall(packet)
-
-        # print('packet sent {} '.format(packet))
         msg = sock.recv(BUFFER_SIZE).decode()
         logger.error('Ack {} received from {}'.format(msg, server_address))
         request_list.remove(server_address)
-        print('socket: {}'.format(sock))
         return sock
 
 
     def run(self):
         while True:
             request = self.request_queue.get()
-            # print('request: {}'.format(request))
             response = self.__tcp_protocol(request['connection'], request['client_address'])
-            print(response)
+            print(self.key_store)
 
     def delete(self, key):
         status = 'failure'
