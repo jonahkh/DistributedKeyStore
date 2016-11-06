@@ -1,6 +1,11 @@
 import time
 import json
-from server.RequestThread import Request
+from enum import Enum
+
+class Request(Enum):
+    PUT = "PUT"
+    GET = "GET"
+    DELETE = "DELETE"
 
 class PacketManager():
     def get_packet(self, protocol, status, data):
