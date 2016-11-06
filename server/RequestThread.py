@@ -123,17 +123,16 @@ class RequestThread(threading.Thread):
 
     def __phase_1(self, server_address, request_list):
         print('Sending to {}'.format(server_address))
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)#.bind((server_address, self.port))
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print('sock {}'.format(sock))
         sock.connect((server_address, self.port))
         packet = packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
         print('sending packet {}'.format(packet))
-        sock.settimeout(5)
         sock.sendall(str(json.dumps(packet)).encode)
         print('packet sent {} '.format(packet))
         msg = sock.recv(BUFFER_SIZE).decode()
         request_list.pop(server_address)
-        print(msg)
+        print('msg: '.format(msg))
 
 
     def run(self):

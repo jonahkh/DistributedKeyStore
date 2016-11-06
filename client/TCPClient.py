@@ -33,6 +33,7 @@ class TCPClient(AbstractClient):
         sock.sendall(message)
         data = ''
         while True:
+            print('receiving data')
             msg = sock.recv(BUFFER_SIZE).decode()
             packet = self.packet_manager.validate_receiving_packet(msg)
             if msg and packet:
