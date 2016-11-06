@@ -24,7 +24,9 @@ class RequestManager():
             thread.start()
 
     def add_job(self, connection, client_address):
+        print('adding job')
         self.tasks.put({'connection': connection, 'client_address': client_address})
+        print('job added')
 
     def wait_completion(self):
         for thread in self.threads:
