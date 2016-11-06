@@ -1,5 +1,6 @@
 import time
 import json
+from server.RequestThread import Request
 
 class PacketManager():
     def get_packet(self, protocol, status, data):
