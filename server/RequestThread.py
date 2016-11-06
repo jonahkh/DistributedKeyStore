@@ -30,6 +30,7 @@ class RequestThread(threading.Thread):
         self.server_addresses = server_addresses[0]
         self.port = server_addresses[1]
         self.packet_manager = packet_manager
+        print(packet_manager)
 
 
     def __tcp_protocol(self, connection, client_address):
@@ -57,7 +58,7 @@ class RequestThread(threading.Thread):
     def __handle_2PC(self, connection, client_address):
         ack_packet = self.packet_manager.get_packet('2pc', 'ack', 'waiting for commit')
         logger.error('Sending acknowledgment {} to {} {}'.format(ack_packet, client_address[0], self.packet_manager.get_time_stamp()))
-        connection.send_all(ack_packet)
+        connection.sendall(ack_packet)
         response = connection.recv(BUFFER_SIZE).decode()
         commit_message = json.loads(response)
         if (self.packet_manager.is_valid_2pc_packet(commit_message)):
@@ -114,10 +115,11 @@ class RequestThread(threading.Thread):
             print(e)
 
     def __phase_1(self, server_address, request_list):
-        # print('Sending to {}'.format(server_address))
+        print('Sending to {}'.format(server_address))
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # print('sock {}'.format(sock))
+        print('sock {}'.format(sock))
         sock.connect((server_address, self.port))
+        print('socket connected with {}'.format(server_address))
         packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
         print('sending packet {}'.format(packet))
         sock.settimeout(1000)
