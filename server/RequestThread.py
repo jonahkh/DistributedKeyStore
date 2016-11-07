@@ -95,6 +95,7 @@ class RequestThread(threading.Thread):
                 beg_time = time.time()
                 while request_list and time.time() - beg_time < 5:  # Timeout after 5 seconds
                     pass
+                executor.shutdown(wait=False)
         except ConnectionError as e:
             print('failed to connect to server {}'.format(e))
         except Exception as e:
@@ -115,12 +116,16 @@ class RequestThread(threading.Thread):
     def __phase_1(self, server_address, request_list):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(.1)
-        sock.connect((server_address, self.port))
-        packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
-        sock.sendall(packet)
-        msg = sock.recv(BUFFER_SIZE).decode()
-        logger.error('Ack {} received from {}'.format(msg, server_address))
-        request_list.remove(server_address)
+        while True:
+            try:
+                sock.connect((server_address, self.port))
+                packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
+                sock.sendall(packet)
+                msg = sock.recv(BUFFER_SIZE).decode()
+                logger.error('Ack {} received from {}'.format(msg, server_address))
+                request_list.remove(server_address)
+            except Exception as e:
+                print(e)
         return sock
 
 
