@@ -6,6 +6,7 @@ import os
 import sys
 import copy
 import concurrent.futures
+import time
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 logger = logging.getLogger(__name__)
@@ -91,7 +92,8 @@ class RequestThread(threading.Thread):
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
                 for server in self.server_addresses:
                     response_list.append(executor.submit(self.__phase_1, server, request_list))
-                while request_list:
+                beg_time = time.time()
+                while request_list and time.time() - beg_time < 5:  # Timeout after 5 seconds
                     pass
             packet = self.packet_manager.get_packet('2pc', 'success', {'key': key, 'value': value}, operation) if not request_list else self.packet_manager.get_packet('2pc', 'failure', 'abort')
             self.__send_commit(packet, response_list)
