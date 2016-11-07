@@ -7,7 +7,6 @@ import sys
 import copy
 import concurrent.futures
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
-from enum import Enum
 
 logger = logging.getLogger(__name__)
 BUFFER_SIZE = 256
@@ -22,7 +21,6 @@ class RequestThread(threading.Thread):
         self.port = server_addresses[1]
         self.packet_manager = packet_manager
         self.server_address = socket.gethostbyname(socket.gethostname())
-
 
     def __tcp_protocol(self, connection, client_address):
         msg = connection.recv(BUFFER_SIZE).decode()
@@ -95,22 +93,20 @@ class RequestThread(threading.Thread):
                     response_list.append(executor.submit(self.__phase_1, server, request_list))
                 while request_list:
                     pass
-            print(self.server_addresses)
-            if (not request_list):
-                for response in response_list:
-                    sock = response.result()
-                    peer_name = sock.getpeername()
-                    if (self.server_address != peer_name[0]):
-                        sock.sendall(self.packet_manager.get_packet('2pc', 'success', {'key': key, 'value': value}, operation))
-                    sock.close()
-                return True
+            packet = self.packet_manager.get_packet('2pc', 'success', {'key': key, 'value': value}, operation) if not request_list else self.packet_manager.get_packet('2pc', 'failure', 'abort')
+            self.__send_commit(packet, response_list)
+            return request_list
         except Exception as e:
             print(e)
         return False
 
-    def __send_commit(self, server):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((server, self.port))
+    def __send_commit(self, packet, response_list):
+        for response in response_list:
+            sock = response.result()
+            peer_name = sock.getpeername()
+            if (self.server_address != peer_name[0]):
+                sock.sendall(packet)
+            sock.close()
 
     def __phase_1(self, server_address, request_list):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -127,7 +123,7 @@ class RequestThread(threading.Thread):
     def run(self):
         while True:
             request = self.request_queue.get()
-            response = self.__tcp_protocol(request['connection'], request['client_address'])
+            self.__tcp_protocol(request['connection'], request['client_address'])
 
     def delete(self, key):
         status = 'failure'
