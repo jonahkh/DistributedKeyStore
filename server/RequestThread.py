@@ -25,8 +25,7 @@ class RequestThread(threading.Thread):
 
     def __tcp_protocol(self, connection, client_address):
         msg = connection.recv(BUFFER_SIZE).decode()
-        logger.error(
-            'Query received: {} from INET: {}, Port: {} {}'.format(msg, client_address[0], client_address[1],
+        logger.error('Query received: {} from INET: {}, Port: {} {}'.format(msg, client_address[0], client_address[1],
                                                                    self.packet_manager.get_time_stamp()))
         data = json.loads(msg)
         if ('tcp' == data['protocol'] and self.packet_manager.is_valid_tcp_packet(data)):         # Message from client
@@ -37,8 +36,7 @@ class RequestThread(threading.Thread):
             self.__handle_2PC(connection, client_address)
         else:
             response = self.packet_manager.get_packet('tcp', 'failure', 'Not a valid packet')
-            logger.error(
-                'Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
+            logger.error('Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
                                                               self.packet_manager.get_time_stamp()))
             connection.sendall(response)
         connection.close()
@@ -47,21 +45,19 @@ class RequestThread(threading.Thread):
         ack_packet = self.packet_manager.get_packet('2pc', 'ack', 'waiting for commit')
         logger.error('Sending acknowledgment {} to {} {}'.format(ack_packet, client_address[0], self.packet_manager.get_time_stamp()))
         connection.sendall(ack_packet)
-        if (client_address[0] != self.server_address):
+        if (client_address[0] != self.server_address):  # Only acknowledge own request, don't commit write (client address on calling thread)
             response = connection.recv(BUFFER_SIZE).decode()
             logger.error('Received response {} from: {}'.format(response, client_address))
             commit_message = json.loads(response)
-            if (self.packet_manager.is_valid_2pc_packet(commit_message)):
+            if (self.packet_manager.is_valid_2pc_packet(commit_message)):   # Execute if successful commit message (all servers responsive)
                 if (commit_message['status'] == 'success'):
                     logger.error('Commit message received {} from {} {}'.format(commit_message, client_address[0], self.packet_manager.get_time_stamp()))
                     self.__get_data(commit_message)
                 else:
-                    logger.error(
-                        'Aborting request from {}:{} {}'.format(client_address[0], client_address[1],
+                    logger.error('Aborting request from {}:{} {}'.format(client_address[0], client_address[1],
                                                                           self.packet_manager.get_time_stamp()))
             else:
-                logger.error(
-                    'Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
+                logger.error('Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
                                                                       self.packet_manager.get_time_stamp()))
 
     def __get_data(self, data):
@@ -72,7 +68,7 @@ class RequestThread(threading.Thread):
         if (operation == 'GET'):
             response = self.get(key)
         else:
-            if ('tcp' in data['protocol']):
+            if ('tcp' in data['protocol']): # client call
                 commit_message = self.__coordinator_handler(key, value, operation)
             if (commit_message and operation == 'DELETE'):
                 response = self.delete(key)
@@ -119,9 +115,9 @@ class RequestThread(threading.Thread):
             try:
                 sock.connect((server_address, self.port))
                 break
-            except Exception as e:
+            except:
                 count += 1
-                if (count > 5):
+                if (count > 5): # timeout after 5 tries
                     return
         packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
         logger.error('Sending ack request {} to {}'.format(packet, server_address))

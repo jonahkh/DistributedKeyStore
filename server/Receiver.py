@@ -30,11 +30,11 @@ class ReceiverThread(threading.Thread):
                 connection, client_address = self.sock.accept()
                 self.request_manager.add_job(connection, client_address)
         except Exception as e:
-            print(e)
+            logger.error(e)    # Something really went wrong if this exception occurs
         finally:
             print('closing socket')
             if (not self.sock._closed):
                 self.sock.close()
 
-    def close_socket(self):
-        self.sock.close()
+    def close_socket(self): # must be called to guarantee socket closes on main thread shutting down
+        self.sock.close()   # socket may not be closed immediately if code crashes during a blocking call

@@ -1,10 +1,11 @@
 import time
 import json
-
+"""
+    Class for managing server packets.
+"""
 class PacketManager():
     def get_packet(self, protocol, status, data, operation=None):
         return json.dumps({'protocol': protocol, 'status': status, 'data': data, 'operation': operation}).encode()
-
 
     def is_valid_tcp_packet(self, packet):
         return ('protocol' in packet

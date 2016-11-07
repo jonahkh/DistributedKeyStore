@@ -27,7 +27,6 @@ class TCPClient(AbstractClient):
         packet = self.packet_manager.get_packet('tcp', operation, key, value)
         message = str(json.dumps(packet)).encode()
         logger.error('Sending request {} {}'.format(message, self.get_time_stamp()))
-
         sock.sendall(message)
         data = ''
         while True:
