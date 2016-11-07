@@ -109,14 +109,14 @@ class RequestThread(threading.Thread):
 
     def __send_commit(self, packet, response_list):
         for response in response_list:
-            sock = response.result()
-            peer_name = sock.getpeername()
-            if (self.server_address != peer_name[0]):
-                sock.sendall(packet)
-            sock.close()
+            if (response):
+                sock = response.result()
+                peer_name = sock.getpeername()
+                if (self.server_address != peer_name[0]):
+                    sock.sendall(packet)
+                sock.close()
 
     def __phase_1(self, server_address, request_list):
-        sock = None
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         count = 0
         sock.settimeout(.1)
