@@ -95,12 +95,14 @@ class RequestThread(threading.Thread):
                 beg_time = time.time()
                 while request_list and time.time() - beg_time < 5:  # Timeout after 5 seconds
                     pass
-            packet = self.packet_manager.get_packet('2pc', 'success', {'key': key, 'value': value}, operation) if not request_list else self.packet_manager.get_packet('2pc', 'failure', 'abort')
-            self.__send_commit(packet, response_list)
-            return request_list
+        except ConnectionError as e:
+            print('failed to connect to server {}'.format(e))
         except Exception as e:
             print(e)
-        return False
+        packet = self.packet_manager.get_packet('2pc', 'success', {'key': key, 'value': value}, operation) \
+            if not request_list else self.packet_manager.get_packet('2pc', 'failure', 'abort')
+        self.__send_commit(packet, response_list)
+        return request_list
 
     def __send_commit(self, packet, response_list):
         for response in response_list:

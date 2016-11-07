@@ -22,7 +22,7 @@ class RequestManager():
 
     def add_job(self, connection, client_address):
         self.tasks.put({'connection': connection, 'client_address': client_address})
-        # print(threading.active_count())
+        print('active threads: {}'.format(threading.active_count()))
 
     def wait_completion(self):
         for thread in self.threads:
