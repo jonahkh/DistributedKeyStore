@@ -115,20 +115,15 @@ class RequestThread(threading.Thread):
 
     def __phase_1(self, server_address, request_list):
         sock = None
-        while True:
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(1)
-                sock.connect((server_address, self.port))
-                packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
-                sock.sendall(packet)
-                msg = sock.recv(BUFFER_SIZE).decode()
-                logger.error('Ack {} received from {}'.format(msg, server_address))
-                request_list.remove(server_address)
-                return sock
-            except Exception as e:
-                sock.close()
-                print('exception: {} with server {}'.format(e, server_address))
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)
+        sock.connect((server_address, self.port))
+        packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
+        sock.sendall(packet)
+        msg = sock.recv(BUFFER_SIZE).decode()
+        logger.error('Ack {} received from {}'.format(msg, server_address))
+        request_list.remove(server_address)
+        return sock
 
 
     def run(self):
