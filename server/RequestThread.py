@@ -77,12 +77,13 @@ class RequestThread(threading.Thread):
             response = self.get(key)
         else:
             if ('tcp' in data['protocol']):
-                print('passing to coordinator')
                 commit_message = self.__coordinator_handler(key, value, operation)
             if (commit_message and operation == 'DELETE'):
                 response = self.delete(key)
             elif (commit_message and operation == 'PUT'):
                 response = self.put(key, value)
+            else:
+                response = self.packet_manager.get_packet('tcp', 'failure', 'Unable to connect to all servers')
         return response
     
     def __coordinator_handler(self, key, value, operation):
@@ -103,7 +104,7 @@ class RequestThread(threading.Thread):
         packet = self.packet_manager.get_packet('2pc', 'success', {'key': key, 'value': value}, operation) \
             if not request_list else self.packet_manager.get_packet('2pc', 'failure', 'abort')
         self.__send_commit(packet, response_list)
-        return request_list
+        return not request_list
 
     def __send_commit(self, packet, response_list):
         for response in response_list:
