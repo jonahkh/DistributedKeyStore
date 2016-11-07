@@ -114,10 +114,11 @@ class RequestThread(threading.Thread):
             sock.close()
 
     def __phase_1(self, server_address, request_list):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1)
+        sock = None
         while True:
             try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(1)
                 sock.connect((server_address, self.port))
                 packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
                 sock.sendall(packet)
