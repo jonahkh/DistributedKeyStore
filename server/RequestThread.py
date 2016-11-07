@@ -34,8 +34,7 @@ class RequestThread(threading.Thread):
             logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
             connection.sendall(response)
         elif ('2pc' == data['protocol'] and self.packet_manager.is_valid_2pc_packet(data)):       # Message from another node
-            response = self.__handle_2PC(connection, client_address)
-            # logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
+            self.__handle_2PC(connection, client_address)
         else:
             response = self.packet_manager.get_packet('tcp', 'failure', 'Not a valid packet')
             logger.error(
@@ -54,8 +53,8 @@ class RequestThread(threading.Thread):
             commit_message = json.loads(response)
             if (self.packet_manager.is_valid_2pc_packet(commit_message)):
                 if (commit_message['status'] == 'success'):
-                    logger.error('Commit message received {} from {} {}'.format(commit_message, client_address[0], self.packet_manager.get_time_stamp()))
-                    data = self.__get_data(commit_message)
+                    logger.error('Commit message received {} from {} {}... writing to key store'.format(commit_message, client_address[0], self.packet_manager.get_time_stamp()))
+                    self.__get_data(commit_message)
                 else:
                     logger.error(
                         'Aborting request from {}:{} {}'.format(client_address[0], client_address[1],
@@ -64,14 +63,11 @@ class RequestThread(threading.Thread):
                 logger.error(
                     'Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
                                                                       self.packet_manager.get_time_stamp()))
-            return self.packet_manager.get_packet('tcp', 'success', 'who needs data?')
 
-            
     def __get_data(self, data):
         key = data['data']['key']
         value = data['data']['value']
         operation = data['operation']
-        response = None
         commit_message = True
         if (operation == 'GET'):
             response = self.get(key)
@@ -83,7 +79,6 @@ class RequestThread(threading.Thread):
             elif (commit_message and operation == 'PUT'):
                 response = self.put(key, value)
             else:
-                print('connection failure')
                 response = self.packet_manager.get_packet('tcp', 'failure', 'Unable to connect to all servers')
         return response
     
@@ -99,7 +94,7 @@ class RequestThread(threading.Thread):
                     pass
                 executor.shutdown(wait=False)
         except ConnectionError as e:
-            print('failed to connect to server {}'.format(e))
+            logger.error('failed to connect to server {}'.format(e))
         except Exception as e:
             print(e)
         packet = self.packet_manager.get_packet('2pc', 'success', {'key': key, 'value': value}, operation) \
@@ -117,30 +112,24 @@ class RequestThread(threading.Thread):
                 sock.close()
 
     def __phase_1(self, server_address, request_list):
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            count = 0
-            sock.settimeout(3)
-            sock.connect((server_address, self.port))
-
-            # while True:
-            #     try:
-            #         sock.connect((server_address, self.port))
-            #         break
-            #     except Exception as e:
-            #         count += 1
-            #         if (count > 5):
-            #             return
-            packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
-            logger.error('Sending ack request to {}'.format(server_address))
-            sock.sendall(packet)
-            msg = sock.recv(BUFFER_SIZE).decode()
-            logger.error('Ack {} received from {}'.format(msg, server_address))
-            request_list.remove(server_address)
-            return sock
-        except:
-            return
-
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        count = 0
+        sock.settimeout(.5)
+        while True:
+            try:
+                sock.connect((server_address, self.port))
+                break
+            except Exception as e:
+                count += 1
+                if (count > 5):
+                    return
+        packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
+        logger.error('Sending ack request {} to {}'.format(packet, server_address))
+        sock.sendall(packet)
+        msg = sock.recv(BUFFER_SIZE).decode()
+        logger.error('Ack {} received from {}'.format(msg, server_address))
+        request_list.remove(server_address)
+        return sock
 
     def run(self):
         while True:
@@ -157,7 +146,7 @@ class RequestThread(threading.Thread):
         else:
             response = 'Key not found'
         self.thread_lock.release()
-        return self.packet_manager.get_packet('tcp', status, response)
+        return self.packet_manager.get_packet('tcp', status, response, 'DELETE')
 
     def get(self, key):
         status = 'failure'
@@ -168,10 +157,10 @@ class RequestThread(threading.Thread):
         else:
             response = 'Key not found'
         self.thread_lock.release()
-        return self.packet_manager.get_packet('tcp', status, response)
+        return self.packet_manager.get_packet('tcp', status, response, 'GET')
 
     def put(self, key, value):
         self.thread_lock.acquire()
         self.key_store[key] = value
         self.thread_lock.release()
-        return self.packet_manager.get_packet('tcp', 'success', None)
+        return self.packet_manager.get_packet('tcp', 'success', None, 'PUT')
