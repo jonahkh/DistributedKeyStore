@@ -128,7 +128,7 @@ class RequestThread(threading.Thread):
                 return sock
             except Exception as e:
                 sock.close()
-                print(e)
+                print('exception: {}'.format(e))
 
 
     def run(self):
