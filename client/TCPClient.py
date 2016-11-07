@@ -22,9 +22,7 @@ class TCPClient(AbstractClient):
 
     def send_message_tcp(self, operation, key, value=None):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # sock.settimeout(5)
-        print(sock)
-        print(self.server_address)
+        sock.settimeout(5)
         sock.connect(self.server_address)
         packet = self.packet_manager.get_packet('tcp', operation, key, value)
         message = str(json.dumps(packet)).encode()
@@ -34,7 +32,6 @@ class TCPClient(AbstractClient):
         data = ''
         while True:
             try:
-                print('receiving data')
                 msg = sock.recv(BUFFER_SIZE).decode()
                 packet = self.packet_manager.validate_receiving_packet(msg)
                 if msg and packet:
@@ -64,7 +61,7 @@ class TCPClient(AbstractClient):
         throughput_end = time.time()
         throughput_time = throughput_end - throughput_begin
         time.sleep(1)
-        throughput = (256 * 150 * .0001) / throughput_time
+        throughput = (256 * 150 * .001) / throughput_time
         self.get_statistics('TCP')
         print('Average Throughput: {}'.format(throughput))
 

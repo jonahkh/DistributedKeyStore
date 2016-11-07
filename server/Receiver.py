@@ -14,19 +14,18 @@ class ReceiverThread(threading.Thread):
         self.request_manager = request_manager
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-
     def run(self):
         server_address = socket.gethostbyname(socket.gethostname())
         server_address = (server_address, self.port)
-        while True:
+        while True: # Wait until port opens.. if program terminated during execution socket might not have been closed
             try:
                 self.sock.bind(server_address)
                 break
-            except Exception as e:
+            except:
                 pass
         self.sock.listen(1)
         try:
-            print('Server {} listening on port {}'.format(server_address, self.port))
+            logger.error('Server {} listening on port {}'.format(server_address, self.port))
             while True:
                 connection, client_address = self.sock.accept()
                 self.request_manager.add_job(connection, client_address)
@@ -39,4 +38,3 @@ class ReceiverThread(threading.Thread):
 
     def close_socket(self):
         self.sock.close()
-

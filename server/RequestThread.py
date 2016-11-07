@@ -53,7 +53,7 @@ class RequestThread(threading.Thread):
             commit_message = json.loads(response)
             if (self.packet_manager.is_valid_2pc_packet(commit_message)):
                 if (commit_message['status'] == 'success'):
-                    logger.error('Commit message received {} from {} {}... writing to key store'.format(commit_message, client_address[0], self.packet_manager.get_time_stamp()))
+                    logger.error('Commit message received {} from {} {}'.format(commit_message, client_address[0], self.packet_manager.get_time_stamp()))
                     self.__get_data(commit_message)
                 else:
                     logger.error(
