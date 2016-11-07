@@ -124,6 +124,7 @@ class RequestThread(threading.Thread):
                 msg = sock.recv(BUFFER_SIZE).decode()
                 logger.error('Ack {} received from {}'.format(msg, server_address))
                 request_list.remove(server_address)
+                break
             except Exception as e:
                 print(e)
         return sock
