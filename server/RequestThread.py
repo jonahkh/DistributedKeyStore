@@ -117,9 +117,9 @@ class RequestThread(threading.Thread):
         sock = None
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         count = 0
+        sock.settimeout(.1)
         while True:
             try:
-                sock.settimeout(3)
                 sock.connect((server_address, self.port))
                 break
             except Exception as e:
