@@ -109,8 +109,8 @@ class RequestThread(threading.Thread):
 
     def __send_commit(self, packet, response_list):
         for response in response_list:
-            if (response):
-                sock = response.result()
+            sock = response.result()
+            if (sock):
                 peer_name = sock.getpeername()
                 if (self.server_address != peer_name[0]):
                     sock.sendall(packet)
