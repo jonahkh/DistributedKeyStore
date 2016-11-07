@@ -127,6 +127,7 @@ class RequestThread(threading.Thread):
                 if (count > 5):
                     return
         packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
+        logger.error('Sending ack request to {}'.format(server_address))
         sock.sendall(packet)
         msg = sock.recv(BUFFER_SIZE).decode()
         logger.error('Ack {} received from {}'.format(msg, server_address))
