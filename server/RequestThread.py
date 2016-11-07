@@ -117,24 +117,29 @@ class RequestThread(threading.Thread):
                 sock.close()
 
     def __phase_1(self, server_address, request_list):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        count = 0
-        sock.settimeout(.1)
-        while True:
-            try:
-                sock.connect((server_address, self.port))
-                break
-            except Exception as e:
-                count += 1
-                if (count > 5):
-                    return
-        packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
-        logger.error('Sending ack request to {}'.format(server_address))
-        sock.sendall(packet)
-        msg = sock.recv(BUFFER_SIZE).decode()
-        logger.error('Ack {} received from {}'.format(msg, server_address))
-        request_list.remove(server_address)
-        return sock
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            count = 0
+            sock.settimeout(3)
+            sock.connect((server_address, self.port))
+
+            # while True:
+            #     try:
+            #         sock.connect((server_address, self.port))
+            #         break
+            #     except Exception as e:
+            #         count += 1
+            #         if (count > 5):
+            #             return
+            packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
+            logger.error('Sending ack request to {}'.format(server_address))
+            sock.sendall(packet)
+            msg = sock.recv(BUFFER_SIZE).decode()
+            logger.error('Ack {} received from {}'.format(msg, server_address))
+            request_list.remove(server_address)
+            return sock
+        except:
+            return
 
 
     def run(self):
