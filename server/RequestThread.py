@@ -69,7 +69,6 @@ class RequestThread(threading.Thread):
 
             
     def __get_data(self, data):
-        print('getting data')
         key = data['data']['key']
         value = data['data']['value']
         operation = data['operation']
@@ -91,7 +90,6 @@ class RequestThread(threading.Thread):
         request_list = copy.copy(self.server_addresses)
         response_list = []
         try:
-            print('requesting acks from other servers')
             with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
                 for server in self.server_addresses:
                     response_list.append(executor.submit(self.__phase_1, server, request_list))
@@ -130,7 +128,6 @@ class RequestThread(threading.Thread):
         while True:
             request = self.request_queue.get()
             response = self.__tcp_protocol(request['connection'], request['client_address'])
-            # print(self.key_store)
 
     def delete(self, key):
         status = 'failure'
