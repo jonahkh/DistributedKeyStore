@@ -83,6 +83,7 @@ class RequestThread(threading.Thread):
             elif (commit_message and operation == 'PUT'):
                 response = self.put(key, value)
             else:
+                print('connection failure')
                 response = self.packet_manager.get_packet('tcp', 'failure', 'Unable to connect to all servers')
         return response
     
