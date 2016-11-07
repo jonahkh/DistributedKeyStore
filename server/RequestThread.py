@@ -116,8 +116,16 @@ class RequestThread(threading.Thread):
     def __phase_1(self, server_address, request_list):
         sock = None
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1)
-        sock.connect((server_address, self.port))
+        count = 0
+        while True:
+            try:
+                sock.settimeout(3)
+                sock.connect((server_address, self.port))
+                break
+            except Exception as e:
+                count += 1
+                if (count > 5):
+                    return
         packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
         sock.sendall(packet)
         msg = sock.recv(BUFFER_SIZE).decode()
