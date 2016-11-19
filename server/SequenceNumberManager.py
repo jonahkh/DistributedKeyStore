@@ -13,6 +13,9 @@ class SequenceNumberManager():
         self.thread_lock.release()
         return self.sequence_number
 
+    def get_sequence_number(self):
+        return self.sequence_number
+
     def set(self, value):
         self.thread_lock.acquire()
         self.sequence_number = value
