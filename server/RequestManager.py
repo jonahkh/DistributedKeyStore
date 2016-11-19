@@ -6,6 +6,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from server.RequestThread import RequestThread
 from server.PacketManager import PacketManager
 from server.KeyStore import KeyStore
+from server.SequenceNumberManager import SequenceNumberManager
 
 THREAD_COUNT = 10
 class RequestManager():
@@ -16,8 +17,9 @@ class RequestManager():
         self.threads = []
         packet_manager = PacketManager()
         server_addresses = (self.__get_server_addresses(), port)
+        sequence_number_manager = SequenceNumberManager()
         for _ in range(THREAD_COUNT):
-            thread = RequestThread(self.tasks, key_store, thread_lock, packet_manager, server_addresses)
+            thread = RequestThread(self.tasks, key_store, thread_lock, packet_manager, server_addresses, sequence_number_manager)
             self.threads.append(thread)
             thread.start()
 
