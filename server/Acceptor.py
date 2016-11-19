@@ -14,7 +14,7 @@ class Acceptor():
         self.sequence_number_manager = sequence_number_manager
 
     def accept(self, data):
-        sequence_number = int(data['data']['sequence_number'])
+        sequence_number = data['data']
         promise = self.__send_promise(data, sequence_number)
         if (promise):
             response = self.__send_accept()
@@ -38,7 +38,7 @@ class Acceptor():
 
     def __send_accept(self):
         response = self.connection.recv(BUFFER_SIZE).decode()
-        sequence_number = response['data']['sequence_number']
+        sequence_number = response['data']
         if (response['status'] == 'reject'):
             return False
         elif sequence_number < self.sequence_number_manager.highest_proposal_number():
