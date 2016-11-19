@@ -5,12 +5,13 @@ import threading
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from server.RequestThread import RequestThread
 from server.PacketManager import PacketManager
+from server.KeyStore import KeyStore
 
 THREAD_COUNT = 10
 class RequestManager():
     def __init__(self, port):
         self.tasks = Queue(THREAD_COUNT)
-        key_store = {}
+        key_store = KeyStore()
         thread_lock = threading.Lock()
         self.threads = []
         packet_manager = PacketManager()

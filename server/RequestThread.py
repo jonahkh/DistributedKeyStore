@@ -7,33 +7,46 @@ import sys
 import copy
 import concurrent.futures
 import time
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+from server.Proposer import Proposer
+from server.Acceptor import Acceptor
 
 logger = logging.getLogger(__name__)
 BUFFER_SIZE = 256
 
+
 class RequestThread(threading.Thread):
-    def __init__(self, queue, key_store, thread_lock, packet_manager, server_addresses):
+    def __init__(self, queue, key_store, thread_lock, packet_manager, server_addresses, sequence_number_manager):
         threading.Thread.__init__(self, daemon=True)
         self.request_queue = queue
-        self.key_store = key_store
         self.thread_lock = thread_lock
+        self.key_store = key_store
         self.server_addresses = server_addresses[0]
         self.port = server_addresses[1]
         self.packet_manager = packet_manager
         self.server_address = socket.gethostbyname(socket.gethostname())
+        self.sequence_number = sequence_number_manager
 
-    def __tcp_protocol(self, connection, client_address):
+    def __handle_request(self, connection, client_address):
         msg = connection.recv(BUFFER_SIZE).decode()
         logger.error('Query received: {} from INET: {}, Port: {} {}'.format(msg, client_address[0], client_address[1],
                                                                    self.packet_manager.get_time_stamp()))
         data = json.loads(msg)
-        if ('tcp' == data['protocol'] and self.packet_manager.is_valid_tcp_packet(data)):         # Message from client
-            response = self.__get_data(data)
+        valid_packet = self.packet_manager.is_valid_tcp_packet(data)
+        if ('tcp' == data['protocol'] and valid_packet):         # Message from client
+            # response = self.__get_data(data)
+            if (data['operation'] == 'GET'):
+                response = self.key_store.get(data['data']['key'])
+            response = Proposer(self.sequence_number, self.packet_manager, self.server_address, self.server_addresses).propose(data)
             logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
             connection.sendall(response)
-        elif ('2pc' == data['protocol'] and self.packet_manager.is_valid_2pc_packet(data)):       # Message from another node
+
+        elif ('2pc' == data['protocol'] and valid_packet):       # Message from another node
             self.__handle_2PC(connection, client_address)
+        elif ('paxos' == data['protocol'] and valid_packet):
+            Acceptor(self.key_store, self.packet_manager, connection, client_address).accept(data)
         else:
             response = self.packet_manager.get_packet('tcp', 'failure', 'Not a valid packet')
             logger.error('Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
@@ -41,122 +54,26 @@ class RequestThread(threading.Thread):
             connection.sendall(response)
         connection.close()
 
-    def __handle_2PC(self, connection, client_address):
-        ack_packet = self.packet_manager.get_packet('2pc', 'ack', 'waiting for commit')
-        logger.error('Sending acknowledgment {} to {} {}'.format(ack_packet, client_address[0], self.packet_manager.get_time_stamp()))
-        connection.sendall(ack_packet)
-        if (client_address[0] != self.server_address):  # Only acknowledge own request, don't commit write (client address on calling thread)
-            response = connection.recv(BUFFER_SIZE).decode()
-            logger.error('Received response {} from: {}'.format(response, client_address))
-            commit_message = json.loads(response)
-            if (self.packet_manager.is_valid_2pc_packet(commit_message)):   # Execute if successful commit message (all servers responsive)
-                if (commit_message['status'] == 'success'):
-                    logger.error('Commit message received {} from {} {}'.format(commit_message, client_address[0], self.packet_manager.get_time_stamp()))
-                    self.__get_data(commit_message)
-                else:
-                    logger.error('Aborting request from {}:{} {}'.format(client_address[0], client_address[1],
-                                                                          self.packet_manager.get_time_stamp()))
-            else:
-                logger.error('Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
-                                                                      self.packet_manager.get_time_stamp()))
-
     def __get_data(self, data):
         key = data['data']['key']
         value = data['data']['value']
         operation = data['operation']
         commit_message = True
         if (operation == 'GET'):
-            response = self.get(key)
+            response = self.key_store.get(key)
         else:
             if ('tcp' in data['protocol']): # client call
                 commit_message = self.__coordinator_handler(key, value, operation)
             if (commit_message and operation == 'DELETE'):
-                response = self.delete(key)
+                response = self.key_store.delete(key)
             elif (commit_message and operation == 'PUT'):
-                response = self.put(key, value)
+                response = self.key_store.put(key, value)
             else:
                 response = self.packet_manager.get_packet('tcp', 'failure', 'Unable to connect to all servers')
         return response
-    
-    def __coordinator_handler(self, key, value, operation):
-        request_list = copy.copy(self.server_addresses)
-        response_list = []
-        try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                for server in self.server_addresses:
-                    response_list.append(executor.submit(self.__phase_1, server, request_list))
-                beg_time = time.time()
-                while request_list and time.time() - beg_time < 5:  # Timeout after 5 seconds
-                    pass
-                executor.shutdown(wait=False)
-        except ConnectionError as e:
-            logger.error('failed to connect to server {}'.format(e))
-        except Exception as e:
-            print(e)
-        packet = self.packet_manager.get_packet('2pc', 'success', {'key': key, 'value': value}, operation) \
-            if not request_list else self.packet_manager.get_packet('2pc', 'failure', 'abort')
-        self.__send_commit(packet, response_list)
-        return not request_list
 
-    def __send_commit(self, packet, response_list):
-        for response in response_list:
-            sock = response.result()
-            if (sock):
-                peer_name = sock.getpeername()
-                if (self.server_address != peer_name[0]):
-                    sock.sendall(packet)
-                sock.close()
-
-    def __phase_1(self, server_address, request_list):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        count = 0
-        sock.settimeout(.5)
-        while True:
-            try:
-                sock.connect((server_address, self.port))
-                break
-            except:
-                count += 1
-                if (count > 5): # timeout after 5 tries
-                    return
-        packet = self.packet_manager.get_packet('2pc', 'requesting ack', 'requesting ack')
-        logger.error('Sending ack request {} to {}'.format(packet, server_address))
-        sock.sendall(packet)
-        msg = sock.recv(BUFFER_SIZE).decode()
-        logger.error('Ack {} received from {}'.format(msg, server_address))
-        request_list.remove(server_address)
-        return sock
 
     def run(self):
         while True:
             request = self.request_queue.get()
-            self.__tcp_protocol(request['connection'], request['client_address'])
-
-    def delete(self, key):
-        status = 'failure'
-        response = None
-        self.thread_lock.acquire()
-        if key in self.key_store:
-            self.key_store.pop(key)
-            status = 'success'
-        else:
-            response = 'Key not found'
-        self.thread_lock.release()
-        return self.packet_manager.get_packet('tcp', status, response, 'DELETE')
-
-    def get(self, key):
-        status = 'failure'
-        self.thread_lock.acquire()
-        if key in self.key_store:
-            response = self.key_store.get(key)
-            status = 'success'
-        else:
-            response = 'Key not found'
-        self.thread_lock.release()
-        return self.packet_manager.get_packet('tcp', status, response, 'GET')
-
-    def put(self, key, value):
-        self.thread_lock.acquire()
-        self.key_store[key] = value
-        self.thread_lock.release()
-        return self.packet_manager.get_packet('tcp', 'success', None, 'PUT')
+            self.__handle_request(request['connection'], request['client_address'])
