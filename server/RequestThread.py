@@ -31,8 +31,8 @@ class RequestThread(threading.Thread):
         logger.error('Query received: {} from INET: {}, Port: {} {}'.format(msg, client_address[0], client_address[1],
                                                                    self.packet_manager.get_time_stamp()))
         data = json.loads(msg)
-        valid_packet = self.packet_manager.is_valid_tcp_packet(data)
-        if ('tcp' == data['protocol'] and valid_packet):         # Message from client
+        valid_packet = self.packet_manager.is_valid_packet(data)
+        if ('tcp' == data['protocol'] and valid_packet and self.packet_manager.is_valid_tcp_packet(data)):         # Message from client
             # response = self.__get_data(data)
             if (data['operation'] == 'GET'):
                 response = self.key_store.get(data['data']['key'])

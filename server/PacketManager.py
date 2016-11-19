@@ -14,7 +14,7 @@ class PacketManager():
                 and 'key' in packet.get('data')
                 and 'value' in packet.get('data'))
 
-    def is_valid_2pc_packet(self, packet):
+    def is_valid_packet(self, packet):
         return ('protocol' in packet
                 and 'data' in packet
                 and 'status' in packet)
