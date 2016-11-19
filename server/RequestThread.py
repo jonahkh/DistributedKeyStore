@@ -40,7 +40,7 @@ class RequestThread(threading.Thread):
             logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
             connection.sendall(response)
         elif ('paxos' == data['protocol'] and valid_packet):
-            Acceptor(self.key_store, self.packet_manager, connection, client_address).accept(data)
+            Acceptor(self.key_store, self.packet_manager, connection, client_address, self.sequence_number).accept(data)
         else:
             response = self.packet_manager.get_packet('tcp', 'failure', 'Not a valid packet')
             logger.error('Received malformed request from {}: {} {}'.format(client_address[0], client_address[1],
