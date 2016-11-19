@@ -14,7 +14,7 @@ class Acceptor():
         self.sequence_number_manager = sequence_number_manager
 
     def accept(self, data):
-        sequence_number = data['data']['sequence_number']
+        sequence_number = int(data['data']['sequence_number'])
         promise = self.__send_promise(data, sequence_number)
         if (promise):
             response = self.__send_accept()
