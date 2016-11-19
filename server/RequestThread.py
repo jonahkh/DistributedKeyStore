@@ -36,12 +36,9 @@ class RequestThread(threading.Thread):
             # response = self.__get_data(data)
             if (data['operation'] == 'GET'):
                 response = self.key_store.get(data['data']['key'])
-            response = Proposer(self.sequence_number, self.packet_manager, self.server_address, self.server_addresses).propose(data)
+            response = Proposer(self.sequence_number, self.packet_manager, self.server_address, self.server_addresses, self.port).propose(data)
             logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
             connection.sendall(response)
-
-        elif ('2pc' == data['protocol'] and valid_packet):       # Message from another node
-            self.__handle_2PC(connection, client_address)
         elif ('paxos' == data['protocol'] and valid_packet):
             Acceptor(self.key_store, self.packet_manager, connection, client_address).accept(data)
         else:
@@ -51,23 +48,23 @@ class RequestThread(threading.Thread):
             connection.sendall(response)
         connection.close()
 
-    def __get_data(self, data):
-        key = data['data']['key']
-        value = data['data']['value']
-        operation = data['operation']
-        commit_message = True
-        if (operation == 'GET'):
-            response = self.key_store.get(key)
-        else:
-            if ('tcp' in data['protocol']): # client call
-                commit_message = self.__coordinator_handler(key, value, operation)
-            if (commit_message and operation == 'DELETE'):
-                response = self.key_store.delete(key)
-            elif (commit_message and operation == 'PUT'):
-                response = self.key_store.put(key, value)
-            else:
-                response = self.packet_manager.get_packet('tcp', 'failure', 'Unable to connect to all servers')
-        return response
+    # def __get_data(self, data):
+    #     key = data['data']['key']
+    #     value = data['data']['value']
+    #     operation = data['operation']
+    #     commit_message = True
+    #     if (operation == 'GET'):
+    #         response = self.key_store.get(key)
+    #     else:
+    #         if ('tcp' in data['protocol']): # client call
+    #             commit_message = self.__coordinator_handler(key, value, operation)
+    #         if (commit_message and operation == 'DELETE'):
+    #             response = self.key_store.delete(key)
+    #         elif (commit_message and operation == 'PUT'):
+    #             response = self.key_store.put(key, value)
+    #         else:
+    #             response = self.packet_manager.get_packet('tcp', 'failure', 'Unable to connect to all servers')
+    #     return response
 
 
     def run(self):
