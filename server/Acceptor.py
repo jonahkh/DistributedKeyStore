@@ -47,7 +47,7 @@ class Acceptor():
         if (response['status'] == 'reject'):
             logger.error('Accept message rejected by leader {}'.format(self.packet_manager.get_time_stamp()))
             return False
-        elif sequence_number < self.sequence_number_manager.highest_proposal_number():
+        elif sequence_number < self.sequence_number_manager.highest_proposal_number:
             logger.error('Accept message rejected {} sequence number too low {}'.format(response, self.packet_manager.get_time_stamp()))
             self.connection.sendall(self.packet_manager.get_packet('paxos', 'reject', 'sequence number too low'))
             return False
