@@ -38,7 +38,7 @@ class Acceptor():
 
     def __send_accept(self):
         response = self.connection.recv(BUFFER_SIZE).decode()
-        sequence_number = int(response['data'])
+        sequence_number = response['data']
         if (response['status'] == 'reject'):
             return False
         elif sequence_number < self.sequence_number_manager.highest_proposal_number():
