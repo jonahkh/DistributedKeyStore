@@ -91,20 +91,21 @@ class Proposer():
         for response in response_list:
             response = response.result()
             print('response: {}'.format(response))
-            msg = response[1]
-            if (isinstance(msg, str)):
-                msg = json.loads(msg)
-            data = msg['data']
-            if data['value'] in values and data['value']:
-                value_count[data['value']['value']] += 1
-            elif data['value'] in values:
-                value_count[None] += 1
-            else:
-                values.append(data['value'])
-                if (data['value']):
-                    value_count[data['value']['value']] = 1
+            if (response):
+                msg = response[1]
+                if (isinstance(msg, str)):
+                    msg = json.loads(msg)
+                data = msg['data']
+                if data['value'] in values and data['value']:
+                    value_count[data['value']['value']] += 1
+                elif data['value'] in values:
+                    value_count[None] += 1
                 else:
-                    value_count[data['value']] = 1
+                    values.append(data['value'])
+                    if (data['value']):
+                        value_count[data['value']['value']] = 1
+                    else:
+                        value_count[data['value']] = 1
         highest_value = values[0]
         highest_count = value_count[values[0]] if not values[0] else value_count[values[0]['value']]
         for val in values:
