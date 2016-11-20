@@ -13,7 +13,6 @@ from server.Acceptor import Acceptor
 logger = logging.getLogger(__name__)
 BUFFER_SIZE = 256
 
-
 class RequestThread(threading.Thread):
     def __init__(self, queue, key_store, thread_lock, packet_manager, server_addresses, sequence_number_manager):
         threading.Thread.__init__(self, daemon=True)
@@ -33,7 +32,6 @@ class RequestThread(threading.Thread):
         data = json.loads(msg)
         valid_packet = self.packet_manager.is_valid_packet(data)
         if ('tcp' == data['protocol'] and self.packet_manager.is_valid_tcp_packet(data)):         # Message from client
-            # response = self.__get_data(data)
             if (data['operation'] == 'GET'):
                 response = self.key_store.get(data['data']['key'])
             else:
@@ -48,25 +46,6 @@ class RequestThread(threading.Thread):
                                                               self.packet_manager.get_time_stamp()))
             connection.sendall(response)
         connection.close()
-
-    # def __get_data(self, data):
-    #     key = data['data']['key']
-    #     value = data['data']['value']
-    #     operation = data['operation']
-    #     commit_message = True
-    #     if (operation == 'GET'):
-    #         response = self.key_store.get(key)
-    #     else:
-    #         if ('tcp' in data['protocol']): # client call
-    #             commit_message = self.__coordinator_handler(key, value, operation)
-    #         if (commit_message and operation == 'DELETE'):
-    #             response = self.key_store.delete(key)
-    #         elif (commit_message and operation == 'PUT'):
-    #             response = self.key_store.put(key, value)
-    #         else:
-    #             response = self.packet_manager.get_packet('tcp', 'failure', 'Unable to connect to all servers')
-    #     return response
-
 
     def run(self):
         while True:

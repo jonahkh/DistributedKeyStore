@@ -65,23 +65,23 @@ class Proposer():
         while True:
             try:
                 sock.connect((server_address, self.port))
-                break
+                packet = self.packet_manager.get_packet('paxos', 'prepare commit', sequence_number)
+                logger.error('Sending prepare commit {} to {}'.format(packet, server_address))
+                sock.sendall(packet)
+                msg = sock.recv(BUFFER_SIZE).decode()
+                if (isinstance(msg, str)):
+                    msg = json.loads(msg)
+                logger.error('Promise {} received from {}'.format(msg, server_address))
+
+                if (msg['status'] == 'promise'):
+                    request_list.remove(server_address)
+                return sock, msg, server_address
             except:
                 count += 1
                 if (count > 5): # timeout after 5 tries
                     sock.close()
                     return
-        packet = self.packet_manager.get_packet('paxos', 'prepare commit', sequence_number)
-        logger.error('Sending prepare commit {} to {}'.format(packet, server_address))
-        sock.sendall(packet)
-        msg = sock.recv(BUFFER_SIZE).decode()
-        if (isinstance(msg, str)):
-            msg = json.loads(msg)
-        logger.error('Promise {} received from {}'.format(msg, server_address))
 
-        if (msg['status'] == 'promise'):
-            request_list.remove(server_address)
-        return sock, msg, server_address
 
     # Phase 2
     def __accept(self, response_list, key, value, operation):
@@ -93,7 +93,6 @@ class Proposer():
             if (isinstance(msg, str)):
                 msg = json.loads(msg)
             data = msg['data']
-            print('msg: {}'.format(msg))
             if data['value'] in values and data['value']:
                 value_count[data['value']['value']] += 1
             elif data['value'] in values:
@@ -105,8 +104,6 @@ class Proposer():
                 else:
                     value_count[data['value']] = 1
         highest_value = values[0]
-        print('value count: {}'.format(value_count))
-        print('values: {}'.format(values))
         highest_count = value_count[values[0]] if not values[0] else value_count[values[0]['value']]
         for val in values:
             val = val if not val else val['value']
@@ -143,13 +140,11 @@ class Proposer():
         else:
             sock.close()
 
-
     # Phase 3
     def __send_commit(self, packet, response_list):
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             for response in response_list:
                 response = response.result()
-                print('response: {}'.format(response))
                 executor.submit(self.__commit, response[0], response[1], packet)
 
     def __commit(self, sock, client_address, packet):
