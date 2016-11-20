@@ -107,7 +107,7 @@ class Proposer():
         highest_value = values[0]
         print('value count: {}'.format(value_count))
         print('values: {}'.format(values))
-        highest_count = value_count[values[0]] if not value_count[values[0]] else value_count[values[0]['value']]
+        highest_count = value_count[values[0]] if not values[0] else value_count[values[0]['value']]
         for val in values:
             val = val['value']
             if (value_count[val] > highest_count):
