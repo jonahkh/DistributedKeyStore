@@ -87,6 +87,7 @@ class Proposer():
     def __accept(self, response_list, key, value, operation):
         values = []
         value_count = {}
+        print(response_list)
         for response in response_list:
             response = response.result()
             print('response: {}'.format(response))
