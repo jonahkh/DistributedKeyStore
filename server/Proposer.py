@@ -32,7 +32,7 @@ class Proposer():
         response_list, request_list = self.__prepare_propose_commit(sequence_number, key, value, operation)
         if len(request_list) < QUORUM:
             accept_list, highest_value = self.__accept(response_list, key, value, operation)
-            if (self.accept_count > QUORUM):
+            if (self.accept_count >= QUORUM):
                 packet = self.packet_manager.get_packet('paxos', 'commit', {'key': highest_value['key'], 'value': highest_value['value']}, highest_value['operation'])
                 self.__send_commit(packet, accept_list)
             else:
