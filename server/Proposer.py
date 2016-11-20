@@ -89,6 +89,7 @@ class Proposer():
         value_count = {}
         for response in response_list:
             response = response.result()
+            print('response: {}'.format(response))
             msg = response[1]
             if (isinstance(msg, str)):
                 msg = json.loads(msg)
