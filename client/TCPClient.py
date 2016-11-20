@@ -4,7 +4,9 @@ import json
 import time
 import argparse
 import csv
-import sys, os
+import sys
+import os
+
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from client.PacketManager import PacketManager
 from client.AbstractClient import AbstractClient
@@ -57,6 +59,7 @@ class TCPClient(AbstractClient):
             call_time = after - before
             logger.error('Received message {} that took {} milliseconds {}'.format(response, call_time * 1000, self.get_time_stamp()))
             self.timing_information[row[0]].append(call_time * 1000.)
+            time.sleep(2)
         throughput_end = time.time()
         throughput_time = throughput_end - throughput_begin
         time.sleep(1)
