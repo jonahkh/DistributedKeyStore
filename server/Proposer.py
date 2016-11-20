@@ -144,7 +144,7 @@ class Proposer():
             for response in response_list:
                 response = response.result()
                 print('response: {}'.format(response))
-                executor.submit(self.__commit, response[0], response[2], packet)
+                executor.submit(self.__commit, response[0], response[1], packet)
 
     def __commit(self, sock, client_address, packet):
         logger.error('Sending commit ok {} to {}'.format(packet, client_address))
