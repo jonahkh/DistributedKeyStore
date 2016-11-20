@@ -103,6 +103,8 @@ class Proposer():
                     value_count[data['value']['value']] = 1
                 else:
                     value_count[data['value']] = 1
+        print('values: {}'.format(values))
+        print('value count: {}'.format(value_count))
         highest_value = values[0]
         highest_count = value_count[values[0]]
         print('Highest value: {}'.format(highest_value))
