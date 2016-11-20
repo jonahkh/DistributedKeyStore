@@ -87,6 +87,7 @@ class Proposer():
             response = response.result()
             sock = response[0]
             msg = response[1]
+            print('msg: {}'.format(msg))
             if msg['value'] in value_count:
                 value_count[msg['value']] += 1
             else:
@@ -94,7 +95,7 @@ class Proposer():
                 value_count[msg['value']] = 1
         highest_value = values[0]
         highest_count = value_count[values[0]]
-        print(highest_value)
+        print('Highest value: {}'.format(highest_value))
         for value in values:
             if (value_count[value] > highest_count):
                 highest_count = value_count[value]
