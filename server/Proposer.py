@@ -88,12 +88,13 @@ class Proposer():
             response = response.result()
             sock = response[0]
             msg = json.loads(response[1])
+            data = msg['data']
             print('msg: {}'.format(msg))
-            if msg['value'] in values:
-                value_count[msg['value']] += 1
+            if data['value'] in values:
+                value_count[data['value']] += 1
             else:
-                values.append(msg['value'])
-                value_count[msg['value']] = 1
+                values.append(data['value'])
+                value_count[data['value']] = 1
         highest_value = values[0]
         highest_count = value_count[values[0]]
         print('Highest value: {}'.format(highest_value))
