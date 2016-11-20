@@ -76,10 +76,11 @@ class Proposer():
         logger.error('Sending prepare commit {} to {}'.format(packet, server_address))
         sock.sendall(packet)
         msg = sock.recv(BUFFER_SIZE).decode()
-        print(type(msg))
+        parsed_msg = json.loads(msg)
+        print(type(parsed_msg))
         logger.error('Promise {} received from {}'.format(msg, server_address))
 
-        if (msg['status'] == 'promise'):
+        if (parsed_msg['status'] == 'promise'):
             request_list.remove(server_address)
         return sock, msg
 
