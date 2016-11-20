@@ -90,8 +90,9 @@ class Proposer():
         value_count = {}
         for response in response_list:
             response = response.result()
-            if (isinstance(response[1], str)):
-                msg = json.loads(response[1])
+            msg = response[1]
+            if (isinstance(msg, str)):
+                msg = json.loads(msg)
             data = msg['data']
             print('msg: {}'.format(msg))
             if data['value'] in values:
