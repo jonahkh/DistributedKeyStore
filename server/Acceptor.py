@@ -77,6 +77,8 @@ class Acceptor():
             else:
                 self.key_store.delete(key)
             self.sequence_number_manager.set_highest_value()
+            print(type(self.key_store))
+            print(self.key_store)
             print(self.key_store.key_store)
         else:
             logger.error('Commit rejected {} {}'.format(response, self.packet_manager.get_time_stamp()))
