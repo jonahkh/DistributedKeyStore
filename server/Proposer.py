@@ -4,6 +4,7 @@ import logging
 import socket
 import time
 import copy
+import json
 import concurrent.futures
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -86,10 +87,8 @@ class Proposer():
         for response in response_list:
             response = response.result()
             sock = response[0]
-            msg = response[1]
+            msg = json.loads(response[1])
             print('msg: {}'.format(msg))
-            print(type(msg.get('value')))
-            print(msg.get('value'))
             if msg['value'] in values:
                 value_count[msg['value']] += 1
             else:
