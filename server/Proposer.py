@@ -127,6 +127,7 @@ class Proposer():
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         count = 0
         sock.settimeout(.5)
+        print(packet)
         while True:
             try:
                 sock.connect((server_address, self.port))
