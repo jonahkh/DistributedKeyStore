@@ -36,8 +36,9 @@ class RequestThread(threading.Thread):
             # response = self.__get_data(data)
             if (data['operation'] == 'GET'):
                 response = self.key_store.get(data['data']['key'])
-            response = Proposer(self.sequence_number, self.packet_manager, self.server_address, self.server_addresses, self.port).propose(data)
-            logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
+            else:
+                response = Proposer(self.sequence_number, self.packet_manager, self.server_address, self.server_addresses, self.port).propose(data)
+                logger.error('Query response: {} {}'.format(response, self.packet_manager.get_time_stamp()))
             connection.sendall(response)
         elif ('paxos' == data['protocol'] and valid_packet):
             Acceptor(self.key_store, self.packet_manager, connection, client_address, self.sequence_number).accept(data)

@@ -31,7 +31,7 @@ class Proposer():
         response_list = self.__prepare_propose_commit(sequence_number, key, value, operation)
         acceptors = None
         if len(response_list) >= QUORUM:
-            self.__accept(response_list)
+            self.__accept(response_list, key, value, operation)
         else:
             logger.error('Quorum not received, rejecting promises')
         return self.packet_manager.get_packet('tcp', 'success', 'success')
@@ -80,8 +80,53 @@ class Proposer():
         return sock, msg
 
     # Phase 2
-    def __accept(self, response_list):
+    def __accept(self, response_list, key, value, operation):
+        values = []
+        value_count = {}
+        for response in response_list:
+            sock = response[0]
+            msg = response[1]
+            if msg['value'] in value_count:
+                value_count[msg['value']] += 1
+            else:
+                values.append(msg['value'])
+                value_count[msg['value']] = 1
+        highest_value = values[0]
+        highest_count = value_count[values[0]]
+        print(highest_value)
+        for value in values:
+            if (value_count[value] > highest_count):
+                highest_count = value_count[value]
+                highest_value = value
+        accept_list = []
+        if not highest_value:
+            packet = self.packet_manager.get_packet('paxos', 'accept', {'key': key, 'value': value}, operation)
+        else:
+            packet = self.packet_manager.get_packet('paxos', 'accept', {'key': highest_value['key'], })
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+            for response in response_list:
+                accept_list.append(executor.submit(self.__send_accept, response[0], packet))
+
         print(response_list)
+
+    def __send_accept(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        count = 0
+        sock.settimeout(.5)
+        while True:
+            try:
+                sock.connect((server_address, self.port))
+                break
+            except:
+                count += 1
+                if (count > 5): # timeout after 5 tries
+                    sock.close()
+                    return
+        packet = self.packet_manager.get_packet('paxos', 'prepare commit', sequence_number)
+        logger.error('Sending prepare commit {} to {}'.format(packet, server_address))
+        sock.sendall(packet)
+        msg = sock.recv(BUFFER_SIZE).decode()
+        logger.error('Promise {} received from {}'.format(msg, server_address))
 
     # Phase 3
     def __send_commit(self, packet, response_list):

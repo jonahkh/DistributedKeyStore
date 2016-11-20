@@ -38,7 +38,6 @@ class Acceptor():
 
     def __send_accept(self):
         response = self.connection.recv(BUFFER_SIZE).decode()
-        print('response = : {}'.format(response))
         sequence_number = response['data']
         if (response['status'] == 'reject'):
             return False
@@ -49,7 +48,7 @@ class Acceptor():
             key = response['data']['key']
             value = response['data']['value']
             operation = response['operation']
-            self.sequence_number_manager.set_highest_value(key, value)
+            self.sequence_number_manager.set_highest_value(key, value, operation)
             self.sequence_number_manager.set(sequence_number)
             self.connection.sendall(self.packet_manager.get_packet('paxos', 'accept', {'key': key, 'value': value}))
             return key, value, operation
