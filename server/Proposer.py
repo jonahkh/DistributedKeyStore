@@ -133,15 +133,17 @@ class Proposer():
             msg = json.loads(msg)
         if (msg['status'] == 'accept'):
             self.accept_count += 1
-            return client_address
+            return sock, client_address
         else:
             sock.close()
+
 
     # Phase 3
     def __send_commit(self, packet, response_list):
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             for response in response_list:
                 response = response.result()
+                print('response: {}'.format(response))
                 executor.submit(self.__commit, response[0], response[2], packet)
 
     def __commit(self, sock, client_address, packet):
