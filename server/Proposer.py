@@ -94,8 +94,10 @@ class Proposer():
                 msg = json.loads(msg)
             data = msg['data']
             print('msg: {}'.format(msg))
-            if data['value'] in values:
+            if data['value'] in values and data['value']:
                 value_count[data['value']['value']] += 1
+            elif data['value'] in values:
+                value_count[None] += 1
             else:
                 values.append(data['value'])
                 if (data['value']):
