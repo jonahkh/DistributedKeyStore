@@ -29,6 +29,7 @@ class Acceptor():
             packet = self.packet_manager.get_packet('paxos', 'reject', 'lower sequence number')
             accept = False
         else:
+            self.sequence_number_manager.set_highest_value('hello', 'world', 'operation')
             packet = self.packet_manager.get_packet('paxos', 'promise', {'sequence_number': self.sequence_number_manager.highest_proposal_number,
                                                                          'value': self.sequence_number_manager.highest_proposed_value})
             self.sequence_number_manager.set(sequence_number)
@@ -51,7 +52,7 @@ class Acceptor():
             self.sequence_number_manager.set_highest_value(key, value, operation)
             self.sequence_number_manager.set(sequence_number)
             self.connection.sendall(self.packet_manager.get_packet('paxos', 'accept', {'key': key, 'value': value}))
-            return key, value, operation
+            return True
 
     def __commit(self, data):
         response = self.connection.recv(BUFFER_SIZE).decode()

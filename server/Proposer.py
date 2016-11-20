@@ -77,12 +77,11 @@ class Proposer():
         sock.sendall(packet)
         msg = sock.recv(BUFFER_SIZE).decode()
         parsed_msg = json.loads(msg)
-        print(type(parsed_msg))
         logger.error('Promise {} received from {}'.format(msg, server_address))
 
         if (parsed_msg['status'] == 'promise'):
             request_list.remove(server_address)
-        return sock, msg
+        return sock, parsed_msg
 
     # Phase 2
     def __accept(self, response_list, key, value, operation):
@@ -114,7 +113,6 @@ class Proposer():
             for response in response_list:
                 accept_list.append(executor.submit(self.__send_accept, response.result()[0], packet))
 
-        print(response_list)
 
     def __send_accept(self, client_address, packet):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
