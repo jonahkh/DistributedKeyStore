@@ -88,7 +88,7 @@ class Proposer():
             sock = response[0]
             msg = response[1]
             print('msg: {}'.format(msg))
-            if msg['value'] in value_count:
+            if msg['value'] in values:
                 value_count[msg['value']] += 1
             else:
                 values.append(msg['value'])
