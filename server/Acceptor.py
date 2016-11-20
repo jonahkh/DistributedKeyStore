@@ -41,6 +41,8 @@ class Acceptor():
 
     def __send_accept(self):
         response = self.connection.recv(BUFFER_SIZE).decode()
+        if (isinstance(response, str)):
+            response = json.loads(response)
         sequence_number = response['data']
         if (response['status'] == 'reject'):
             logger.error('Accept message rejected by leader {}'.format(self.packet_manager.get_time_stamp()))
@@ -61,6 +63,8 @@ class Acceptor():
 
     def __commit(self, data):
         response = self.connection.recv(BUFFER_SIZE).decode()
+        if (isinstance(response, str)):
+            response = json.loads(response)
         if (response['status'] == 'commit'):
             logger.error('Commit received {}, writing to key store {}'.format(response, self.packet_manager.get_time_stamp()))
             data = response['data']
