@@ -29,9 +29,9 @@ class Proposer():
         value = data['data']['value']
         operation = data['operation']
         commit_message = True
-        response_list = self.__prepare_propose_commit(sequence_number, key, value, operation)
+        response_list, request_list = self.__prepare_propose_commit(sequence_number, key, value, operation)
         acceptors = None
-        if len(response_list) >= QUORUM:
+        if len(request_list) < QUORUM:
             self.__accept(response_list, key, value, operation)
         else:
             logger.error('Quorum not received, rejecting promises')
@@ -45,7 +45,7 @@ class Proposer():
                 for server in self.server_addresses:
                     response_list.append(executor.submit(self.__propose_commit, server, request_list, sequence_number))
                 beg_time = time.time()
-                while len(request_list) > QUORUM and time.time() - beg_time < 1:  # Timeout after 5 seconds
+                while len(request_list) >= QUORUM and time.time() - beg_time < 1:  # Timeout after 5 seconds
                     pass
                 executor.shutdown(wait=False)
         except ConnectionError as e:
@@ -57,7 +57,7 @@ class Proposer():
         #     if not request_list else self.packet_manager.get_packet('2pc', 'failure', 'abort')
         # self.__send_commit(packet, response_list)
         # return not request_list
-        return response_list
+        return response_list, request_list
 
     def __propose_commit(self, server_address, request_list, sequence_number):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
