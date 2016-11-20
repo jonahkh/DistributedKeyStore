@@ -98,6 +98,9 @@ class Proposer():
             if data['value'] in values:
                 value_count[data['value']] += 1
             else:
+                print('value count: {}'.format(value_count))
+                print('values: {}'.format(values))
+                print('data: {}'.format(data))
                 values.append(data['value'])
                 value_count[data['value']] = 1
         highest_value = values[0]
