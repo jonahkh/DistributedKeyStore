@@ -34,7 +34,7 @@ class Proposer():
             self.__accept(response_list)
         else:
             logger.error('Quorum not received, rejecting promises')
-        return self.packet_manager.get_packet('tcp', 'success', None)
+        return self.packet_manager.get_packet('tcp', 'success', 'success')
     # Phase 1
     def __prepare_propose_commit(self, sequence_number, key, value, operation):
         request_list = copy.copy(self.server_addresses)
@@ -81,7 +81,7 @@ class Proposer():
 
     # Phase 2
     def __accept(self, response_list):
-        pass
+        print(response_list)
 
     # Phase 3
     def __send_commit(self, packet, response_list):
