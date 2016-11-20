@@ -75,7 +75,8 @@ class Proposer():
         packet = self.packet_manager.get_packet('paxos', 'prepare commit', sequence_number)
         logger.error('Sending prepare commit {} to {}'.format(packet, server_address))
         sock.sendall(packet)
-        msg = json.loads(sock.recv(BUFFER_SIZE).decode())
+        msg = sock.recv(BUFFER_SIZE).decode()
+        print(type(msg))
         logger.error('Promise {} received from {}'.format(msg, server_address))
 
         if (msg['status'] == 'promise'):
