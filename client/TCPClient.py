@@ -57,6 +57,7 @@ class TCPClient(AbstractClient):
             call_time = after - before
             logger.error('Received message {} that took {} milliseconds {}'.format(response, call_time * 1000, self.get_time_stamp()))
             self.timing_information[row[0]].append(call_time * 1000.)
+            break
         throughput_end = time.time()
         throughput_time = throughput_end - throughput_begin
         time.sleep(1)
