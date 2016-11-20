@@ -84,6 +84,7 @@ class Proposer():
         values = []
         value_count = {}
         for response in response_list:
+            print(response)
             sock = response[0]
             msg = response[1]
             if msg['value'] in value_count:
