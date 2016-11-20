@@ -45,7 +45,7 @@ class Proposer():
                 for server in self.server_addresses:
                     response_list.append(executor.submit(self.__propose_commit, server, request_list, sequence_number))
                 beg_time = time.time()
-                while len(request_list) < QUORUM and time.time() - beg_time < 5:  # Timeout after 5 seconds
+                while len(request_list) > QUORUM and time.time() - beg_time < 1:  # Timeout after 5 seconds
                     pass
                 executor.shutdown(wait=False)
         except ConnectionError as e:
@@ -77,7 +77,8 @@ class Proposer():
         sock.sendall(packet)
         msg = sock.recv(BUFFER_SIZE).decode()
         logger.error('Promise {} received from {}'.format(msg, server_address))
-        request_list.remove(server_address)
+        if (msg['status'] == 'promise'):
+            request_list.remove(server_address)
         return sock, msg
 
     # Phase 2
@@ -86,7 +87,6 @@ class Proposer():
         value_count = {}
         for response in response_list:
             response = response.result()
-            sock = response[0]
             msg = json.loads(response[1])
             data = msg['data']
             print('msg: {}'.format(msg))
@@ -106,14 +106,14 @@ class Proposer():
         if not highest_value:
             packet = self.packet_manager.get_packet('paxos', 'accept', {'key': key, 'value': value}, operation)
         else:
-            packet = self.packet_manager.get_packet('paxos', 'accept', {'key': highest_value['key'], })
+            packet = self.packet_manager.get_packet('paxos', 'accept', {'key': highest_value['key'], 'value': highest_value['value']}, highest_value['operation'])
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             for response in response_list:
-                accept_list.append(executor.submit(self.__send_accept, response[0], packet))
+                accept_list.append(executor.submit(self.__send_accept, response.result()[0], packet))
 
         print(response_list)
 
-    def __send_accept(self):
+    def __send_accept(self, client_address, packet):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         count = 0
         sock.settimeout(.5)
