@@ -43,7 +43,7 @@ class Acceptor():
         response = self.connection.recv(BUFFER_SIZE).decode()
         if (isinstance(response, str)):
             response = json.loads(response)
-        sequence_number = response['data']
+        sequence_number = response['data']['sequence_number']
         if (response['status'] == 'reject'):
             logger.error('Accept message rejected by leader {}'.format(self.packet_manager.get_time_stamp()))
             return False

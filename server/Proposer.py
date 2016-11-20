@@ -110,10 +110,11 @@ class Proposer():
                 highest_count = value_count[val]
                 highest_value = val
         accept_list = []
+        sequence_number = self.sequence_number.get_sequence_number()
         if not highest_value:
-            packet = self.packet_manager.get_packet('paxos', 'accept', {'key': key, 'value': value}, operation)
+            packet = self.packet_manager.get_packet('paxos', 'accept', {'key': key, 'value': value, 'sequence_number': sequence_number}, operation)
         else:
-            packet = self.packet_manager.get_packet('paxos', 'accept', {'key': highest_value['key'], 'value': highest_value['value']}, highest_value['operation'])
+            packet = self.packet_manager.get_packet('paxos', 'accept', {'key': highest_value['key'], 'value': highest_value['value'], 'sequence_number': sequence_number}, highest_value['operation'])
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             for response in response_list:
                 accept_list.append(executor.submit(self.__send_accept, response.result()[0], response.result()[2], packet))
