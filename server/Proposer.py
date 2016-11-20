@@ -76,12 +76,13 @@ class Proposer():
         logger.error('Sending prepare commit {} to {}'.format(packet, server_address))
         sock.sendall(packet)
         msg = sock.recv(BUFFER_SIZE).decode()
-        parsed_msg = json.loads(msg)
+        if (isinstance(msg, str)):
+            msg = json.loads(msg)
         logger.error('Promise {} received from {}'.format(msg, server_address))
 
-        if (parsed_msg['status'] == 'promise'):
+        if (msg['status'] == 'promise'):
             request_list.remove(server_address)
-        return sock, parsed_msg
+        return sock, msg
 
     # Phase 2
     def __accept(self, response_list, key, value, operation):
@@ -89,7 +90,8 @@ class Proposer():
         value_count = {}
         for response in response_list:
             response = response.result()
-            msg = json.loads(response[1])
+            if (isinstance(response[1], str)):
+                msg = json.loads(response[1])
             data = msg['data']
             print('msg: {}'.format(msg))
             if data['value'] in values:
