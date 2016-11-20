@@ -109,6 +109,7 @@ class Proposer():
         highest_count = value_count[values[0]['value']]
         print('Highest value: {}'.format(highest_value))
         for val in values:
+            val = val['value']
             if (value_count[val] > highest_count):
                 highest_count = value_count[val]
                 highest_value = val
