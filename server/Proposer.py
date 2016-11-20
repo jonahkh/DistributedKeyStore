@@ -117,7 +117,8 @@ class Proposer():
             packet = self.packet_manager.get_packet('paxos', 'accept', {'key': highest_value['key'], 'value': highest_value['value'], 'sequence_number': sequence_number}, highest_value['operation'])
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             for response in response_list:
-                accept_list.append(executor.submit(self.__send_accept, response.result()[0], response.result()[2], packet))
+                response = response.result()
+                accept_list.append(executor.submit(self.__send_accept, response[0], response[2], packet))
             beg_time = time.time()
             while self.accept_count < QUORUM and time.time() - beg_time < 1:  # Timeout after 5 seconds
                 pass
@@ -140,6 +141,7 @@ class Proposer():
     def __send_commit(self, packet, response_list):
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             for response in response_list:
+                response = response.result()
                 executor.submit(self.__commit, response[0], response[2], packet)
 
     def __commit(self, sock, client_address, packet):
