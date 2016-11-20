@@ -39,4 +39,5 @@ class KeyStore():
         self.thread_lock.acquire()
         self.key_store[key] = value
         self.thread_lock.release()
+        print(self.key_store)
         return self.packet_manager.get_packet('tcp', 'success', None, 'PUT')
