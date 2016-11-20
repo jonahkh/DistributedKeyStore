@@ -63,7 +63,6 @@ class Acceptor():
 
     def __commit(self, data):
         response = self.connection.recv(BUFFER_SIZE).decode()
-        print(response)
         if (isinstance(response, str)):
             response = json.loads(response)
         if (response['status'] == 'commit'):
@@ -72,6 +71,8 @@ class Acceptor():
             key = data['key']
             value = data['value']
             operation = response['operation']
+            print('WRITING TO KEY_STORE {}'.format(operation))
+
             if ('PUT' == operation):
                 self.key_store.put(key, value)
             else:
