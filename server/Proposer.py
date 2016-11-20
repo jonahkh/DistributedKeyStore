@@ -127,6 +127,7 @@ class Proposer():
             beg_time = time.time()
             while self.accept_count < QUORUM and time.time() - beg_time < 1:  # Timeout after 5 seconds
                 pass
+            highest_value = highest_value if highest_value else {'key': key, 'value': value, 'operation': operation}
             return accept_list, highest_value
 
     def __send_accept(self, sock, client_address, packet):
