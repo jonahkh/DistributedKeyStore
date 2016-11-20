@@ -40,7 +40,6 @@ class TCPClient(AbstractClient):
                 else:
                     data = json.loads(data)
                     sock.close()
-                    break
             except Exception as e:
                 print(e)
                 break
