@@ -123,7 +123,8 @@ class Proposer():
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             for response in response_list:
                 response = response.result()
-                accept_list.append(executor.submit(self.__send_accept, response[0], response[2], packet))
+                if (response):
+                    accept_list.append(executor.submit(self.__send_accept, response[0], response[2], packet))
             beg_time = time.time()
             while self.accept_count < QUORUM and time.time() - beg_time < 1:  # Timeout after 5 seconds
                 pass
