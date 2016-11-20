@@ -63,6 +63,7 @@ class Acceptor():
 
     def __commit(self, data):
         response = self.connection.recv(BUFFER_SIZE).decode()
+        print(response)
         if (isinstance(response, str)):
             response = json.loads(response)
         if (response['status'] == 'commit'):
