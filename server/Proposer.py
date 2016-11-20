@@ -108,10 +108,10 @@ class Proposer():
         highest_value = values[0]
         highest_count = value_count[values[0]['value']]
         print('Highest value: {}'.format(highest_value))
-        for value in values:
-            if (value_count[value] > highest_count):
-                highest_count = value_count[value]
-                highest_value = value
+        for val in values:
+            if (value_count[val] > highest_count):
+                highest_count = value_count[val]
+                highest_value = val
         accept_list = []
         if not highest_value:
             packet = self.packet_manager.get_packet('paxos', 'accept', {'key': key, 'value': value}, operation)
