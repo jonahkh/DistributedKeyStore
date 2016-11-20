@@ -96,13 +96,13 @@ class Proposer():
             data = msg['data']
             print('msg: {}'.format(msg))
             if data['value'] in values:
-                value_count[data['value']] += 1
+                value_count[data['value']['value']] += 1
             else:
-                print('value count: {}'.format(value_count))
-                print('values: {}'.format(values))
-                print('data: {}'.format(data))
                 values.append(data['value'])
-                value_count[data['value']] = 1
+                if (data['value']):
+                    value_count[data['value']['value']] = 1
+                else:
+                    value_count[data['value']] = 1
         highest_value = values[0]
         highest_count = value_count[values[0]]
         print('Highest value: {}'.format(highest_value))
