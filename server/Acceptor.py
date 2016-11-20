@@ -30,7 +30,6 @@ class Acceptor():
             accept = False
             logger.error('Rejecting proposal {}, sequence number too low {}'.format(data, self.packet_manager.get_time_stamp()))
         else:
-            self.sequence_number_manager.set_highest_value('hello', 'world', 'operation')
             packet = self.packet_manager.get_packet('paxos', 'promise', {'sequence_number': self.sequence_number_manager.highest_proposal_number,
                                                                          'value': self.sequence_number_manager.highest_proposed_value})
             self.sequence_number_manager.set(sequence_number)
