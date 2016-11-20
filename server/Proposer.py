@@ -35,6 +35,8 @@ class Proposer():
             if (self.accept_count > QUORUM):
                 packet = self.packet_manager.get_packet('paxos', 'commit', {'key': highest_value['key'], 'value': highest_value['value']}, highest_value['operation'])
                 self.__send_commit(packet, accept_list)
+            else:
+                logger.error('Quorum not received, rejected accepts')
         else:
             logger.error('Quorum not received, rejecting promises')
         return self.packet_manager.get_packet('tcp', 'success', 'success')
