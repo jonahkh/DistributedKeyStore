@@ -38,6 +38,7 @@ class Acceptor():
 
     def __send_accept(self):
         response = self.connection.recv(BUFFER_SIZE).decode()
+        print('response = : {}'.format(response))
         sequence_number = response['data']
         if (response['status'] == 'reject'):
             return False
