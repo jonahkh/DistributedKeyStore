@@ -105,6 +105,8 @@ class Proposer():
                 else:
                     value_count[data['value']] = 1
         highest_value = values[0]
+        print('value count: {}'.format(value_count))
+        print('values: {}'.format(values))
         highest_count = value_count[values[0]] if not value_count[values[0]] else value_count[values[0]['value']]
         for val in values:
             val = val['value']
