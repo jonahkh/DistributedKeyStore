@@ -35,8 +35,10 @@ class Proposer():
             if (self.accept_count >= QUORUM):
                 packet = self.packet_manager.get_packet('paxos', 'commit', {'key': highest_value['key'], 'value': highest_value['value']}, highest_value['operation'])
                 self.__send_commit(packet, accept_list)
+                self.__reject(accept_list)
             else:
                 logger.error('Quorum not received, rejected accepts')
+                self.__reject(response_list)
         else:
             logger.error('Quorum not received, rejecting promises')
         return self.packet_manager.get_packet('tcp', 'success', 'success')
@@ -157,3 +159,11 @@ class Proposer():
         logger.error('Sending commit ok {} to {}'.format(packet, client_address))
         sock.sendall(packet)
         sock.close()
+
+    def __reject(self, response_list):
+        for response in response_list:
+            response = response.result()
+            if response:
+                sock = response[0]
+                sock.sendall(self.packet_manager.get_packet('paxos', 'reject', 'reject'))
+                sock.close()
