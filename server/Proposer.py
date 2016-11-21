@@ -84,9 +84,7 @@ class Proposer():
                 count += 1
                 if (count > 5): # timeout after 5 tries
                     sock.close()
-                    return self.packet_manager.get_packet('tcp', 'failed', 'Servers unresponsive')
-
-
+                    return
     # Phase 2
     def __accept(self, response_list, key, value, operation):
         values = []

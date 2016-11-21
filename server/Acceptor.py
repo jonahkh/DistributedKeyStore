@@ -5,7 +5,7 @@ from random import randint
 logger = logging.getLogger(__name__)
 
 BUFFER_SIZE = 256
-MAGIC_NUMBER = 5
+MAGIC_NUMBER = 51
 class Acceptor():
     def __init__(self, key_store, packet_manager, connection, client_address, sequence_number_manager):
         self.key_store = key_store
@@ -15,7 +15,7 @@ class Acceptor():
         self.sequence_number_manager = sequence_number_manager
 
     def accept(self, data):
-        if (randint(1, 10) == 10):
+        if (randint(1, 100) == MAGIC_NUMBER):
             logger.error('This acceptor is choosing to fail')
             return
         sequence_number = data['data']
