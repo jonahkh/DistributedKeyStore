@@ -84,7 +84,7 @@ class Proposer():
                 count += 1
                 if (count > 5): # timeout after 5 tries
                     sock.close()
-                    return
+                    return self.packet_manager.get_packet('tcp', 'failed', 'Servers unresponsive')
 
 
     # Phase 2
@@ -163,6 +163,7 @@ class Proposer():
     def __reject(self, response_list):
         for response in response_list:
             response = response.result()
+            print('rejected response: {}'.format(response))
             if response:
                 sock = response[0]
                 sock.sendall(self.packet_manager.get_packet('paxos', 'reject', 'reject'))
