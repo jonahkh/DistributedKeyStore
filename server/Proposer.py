@@ -161,8 +161,10 @@ class Proposer():
     def __reject(self, response_list):
         for response in response_list:
             response = response.result()
-            print('rejected response: {}'.format(response))
-            if response:
-                sock = response[0]
-                sock.sendall(self.packet_manager.get_packet('paxos', 'reject', 'reject'))
-                sock.close()
+            try:
+                if response:
+                    sock = response[0]
+                    sock.sendall(self.packet_manager.get_packet('paxos', 'reject', 'reject'))
+                    sock.close()
+            except:
+                pass
