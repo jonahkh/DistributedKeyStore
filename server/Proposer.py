@@ -92,7 +92,6 @@ class Proposer():
         print(response_list)
         for response in response_list:
             response = response.result()
-            print('response: {}'.format(response))
             if (response):
                 msg = response[1]
                 if (isinstance(msg, str)):
@@ -117,7 +116,6 @@ class Proposer():
                 highest_value = val
         accept_list = []
         sequence_number = self.sequence_number.get_sequence_number()
-        print(highest_value)
         if not highest_value:
             packet = self.packet_manager.get_packet('paxos', 'accept', {'key': key, 'value': value, 'sequence_number': sequence_number}, operation)
         else:

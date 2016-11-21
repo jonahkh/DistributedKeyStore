@@ -19,32 +19,23 @@ https://github.com/jonahkh/DistributedKeyStore
 
 Assignment Overview:
 
-The purpose of this assignment was to expose us to many of the issues that arise when working with a distributed system.
-This was the first time we were required to work with more than one running server instance, so the challenges were quite
-different than running with only one server. Not only did we have to be able to handle multiple incoming requests from
-one to many clients, we had to be able to handle incoming requests from other servers implementing the two-phased commit.
+The purpose of this assignment was to expose us to the issues that arise when building distributed, replicated system.
+The two-phase commit was okay assuming that none of the nodes would fail, but would fail if some of them did. With Paxos,
+we just have to have a majority of nodes respond in order to commit the message which gives it obvious advantages.
 
 Technical Impression:
 
-For the requirements, more description on what was expected of us in terms of our implementation would have been very
-helpful. I ended up guessing regarding certain issues such as should each node acquire the resource lock during phase one
-of the 2PC or from the commit message. Areas I struggled in were handling an unresponsive server. Most of my issues were
-based on not fully understanding how the socket library is implemented for Python. For example, when trying to establish
-a connection with another server, the connection function call does not have its own retry built in, it only has a timeout.
-Therefore I had to implement my own retry mechanism to handle an unresponsive server, and the whole request would abort
-after a total of 5 seconds. Another issue was figuring out how to call all of the servers asynchronously and determine
-when and if they had all been completed separately. For this, I took advantage of a built-in Python library called
-ThreadPoolExecutor which allows you to assign a function and arguments to a task that gets executed asynchronously and
-you can specify exactly how many different threads would be allowed to execute. A timeout could be set and each task returns
-a 'future' object which is how you can track the status of the asynchronous call. Overall this assignment was very fun
-to implement and I learned a lot more about sockets, multi-threading, asynchronous calls, and the Python library in general.
-I've only been working with Python for the duration of this quarter so jumping into a project like this in a new language
-has been very interesting and rewarding.
-
-
-If I were to do this project differently, I definitely would have just used RPC. This would have allowed me to eliminate
-my socket code all together. The only reason I didn't was because I had thought I understood TCP the most.
-
+This assignment was definitely more difficult than the previous ones. A lot of the difficulty came down to how to actually
+design the three-phase commit. There were different approaches i was thinking about, such as having threads only execute
+one of the phases at a time. Instead, I went with having one thread execute a single all three stages at once. This has
+the potential for livelock situations since there is a limited number of threads so I implemented timeouts in the event
+that there was no response from the leader. I did not use a leader-election algorithm, I just assumed that whichever node
+received the request would be the leader for that particular operation. For the second requirement, I just had each acceptor
+choose a random number between 1 and 100. If it was the 'magic number' (51), then the acceptor would just return with no
+response. Another way to test out this functionality is by starting up all but 2 of the nodes and the client requests
+will still be fulfilled. I found it difficult to implement the accept phase because of the highest value issue. I just
+ended up mapping each response to the count representing how many times that value has been received. The value was set
+as the key, value, operation dictionary object.
 
 Team Discussion:
 
@@ -55,12 +46,11 @@ I thought it would make more sense for me to complete it on my own with the bene
 
 Performance Analysis:
 
-For the results, I found that the single server TCP protocol performed much faster than the 2PC. As you can see in the
-graph, the average time for a PUT or DELETE was around 20ms for 2PC versus 2ms for TCP. The overall average throughput for
-TCP was 89.5 transactions a second and 2PC was at 20.3 transactions a second. Clearly the 2PC protocol took significantly
-more time than the single-server TCP. GET operations were not affected since no inter-server communication was done.
+Paxos performed only slightly worse than 2PC with an average throughput of 14.13 transactions/second, 2PC was at
+20.3 transactions/second, and TCP was 89.5 transactions/second. This reduced throughput was a result of the extra phase
+needed to commit. I also implemented the algorithm with timeouts/retries which contribute to the overall operation time.
+Gets are consistently the same for all three protocols.
 
 Sources:
-
 
 Any code replication was based on examples from https://wiki.python.org
